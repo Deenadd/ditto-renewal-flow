@@ -25,6 +25,7 @@ import {
   bankFormDefaults,
   coveredMembers,
   nomineeCandidates,
+  defaultCoverId,
   recommendedAddOns,
   questions,
   type QuestionId,
@@ -58,7 +59,7 @@ export function RenewalReview() {
   const [answers, setAnswers] = useState<Answers>({});
   const [pinCode, setPinCode] = useState("");
   const [member, setMember] = useState<NewMember>(defaultMember);
-  const [cover, setCover] = useState<string | null>(null);
+  const [cover, setCover] = useState<string>(defaultCoverId);
   const [bankForm, setBankForm] = useState<BankForm>({ ...bankFormDefaults });
   const [nominees, setNominees] = useState<string[]>(defaultNominees);
   const [addOns, setAddOns] = useState<AddOnState>(defaultAddOns);
@@ -120,7 +121,7 @@ export function RenewalReview() {
     setAnswers({});
     setPinCode("");
     setMember(defaultMember);
-    setCover(null);
+    setCover(defaultCoverId);
     setBankForm({ ...bankFormDefaults });
     setNominees(defaultNominees);
     setAddOns(defaultAddOns);

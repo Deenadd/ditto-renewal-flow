@@ -103,7 +103,7 @@ Spacing, type, colour and line breaks match. Decisions worth knowing:
 | 1. Moved since last year? | A pin code field |
 | 2. Need to add or remove anyone? | A form to add a member, plus a notice that removals go through an advisor |
 | 3. Any new health conditions? | A line inviting the user to contact an advisor |
-| 4. Want to increase your cover? | Three cover options, ₹15L, ₹20L and ₹25L |
+| 4. Want to increase your cover? | Three cover options, ₹15L, ₹20L and ₹25L, opening on the ₹15L already held |
 | 5. Change the refund account? | A bank form |
 | 6. Change the nominee? | A nominee switch list |
 | 7. Add new add-ons? | The add-ons card: three locked, five recommended, and a collapsed group |

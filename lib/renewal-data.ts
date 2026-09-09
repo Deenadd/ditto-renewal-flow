@@ -205,6 +205,8 @@ export type CoverOption = {
   amount: string;
   title: string;
   description: string;
+  /** The amount already on the policy, selected when the block opens. */
+  current?: boolean;
 };
 
 export const coverOptions: CoverOption[] = [
@@ -213,6 +215,7 @@ export const coverOptions: CoverOption[] = [
     amount: "₹15L",
     title: "Essential Cover",
     description: "Covers the majority of hospital stays for a family of four.",
+    current: true,
   },
   {
     id: "20l",
@@ -227,6 +230,9 @@ export const coverOptions: CoverOption[] = [
     description: "Highest available across all three shortlisted insurers.",
   },
 ];
+
+export const defaultCoverId =
+  coverOptions.find((option) => option.current)?.id ?? coverOptions[0].id;
 
 /** Refund account form (nodes 70:3426 - 70:3437). */
 export const bankFormDefaults = {
