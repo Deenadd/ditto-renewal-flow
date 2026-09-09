@@ -147,10 +147,10 @@ One confirmation line per question, worded from the answer given. Lines the
 reviewer changed carry a blue plus and a Change link back to that question;
 the rest carry a green check.
 
-The lines land one at a time, a little under half a second apart, each
-resolving out of a blur as it settles. The policy periods follow once the last
-line is in. Reduced motion collapses the stagger so the whole screen arrives at
-once.
+The lines land one a second, each resolving out of a blur as it settles. The
+policy periods follow a second after the last line, so the screen takes about
+eight seconds to fill. Reduced motion collapses the stagger so the whole screen
+arrives at once. The pace is `STEP_MS` in `components/renewal-summary.tsx`.
 
 Policy periods offer one, two and three year terms, with the two longer ones
 inside the "Save 18% on medical inflation" panel. "Go back" returns to the

@@ -24,7 +24,7 @@ export type SummaryLine = {
 };
 
 /** How long between one summary line appearing and the next. */
-const STEP_MS = 440;
+const STEP_MS = 1000;
 
 function PeriodCard({
   period,
