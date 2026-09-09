@@ -479,3 +479,78 @@ export function CheckCircleSolidIcon({ className, size = 20 }: IconProps) {
     </svg>
   );
 }
+
+/* -------------------------------------------------------------------------
+   Icons introduced by the summary screen (node 78:6737).
+   The viewBox trims the exported drop-shadow padding so the 24px artwork
+   lands exactly on the 24px box.
+   ------------------------------------------------------------------------- */
+
+const RING =
+  "M24.75 12.75C24.75 18.2728 20.2728 22.75 14.75 22.75C9.22715 22.75 4.75 18.2728 4.75 12.75C4.75 7.22715 9.22715 2.75 14.75 2.75C20.2728 2.75 24.75 7.22715 24.75 12.75Z";
+
+function Disc({
+  className,
+  size,
+  children,
+}: IconProps & { children: React.ReactNode }) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="3 1 23.5 23.5"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d={RING}
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {children}
+    </svg>
+  );
+}
+
+/** check-circle.2, 24x24, marks a line that has not changed. */
+export function SummaryCheckIcon({ className, size = 24 }: IconProps) {
+  return (
+    <Disc className={className} size={size}>
+      <path
+        d="M10.25 12.75L13.25 15.75L19.25 9.75"
+        stroke="white"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Disc>
+  );
+}
+
+/** check-circle.2 with a plus, 24x24, marks a line the reviewer changed. */
+export function SummaryPlusIcon({ className, size = 24 }: IconProps) {
+  return (
+    <Disc className={className} size={size}>
+      <path
+        d="M14.75 17.75V8.75"
+        stroke="white"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10.2539 13.2422L19.2539 13.2422"
+        stroke="white"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Disc>
+  );
+}

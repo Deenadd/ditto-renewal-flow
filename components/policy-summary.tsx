@@ -1,7 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import {
   ArrowRightIcon,
   CalendarIcon,
+  CheckMarkIcon,
+  ChevronDownIcon,
   ClockIcon,
   CloseCircleIcon,
   UserIcon,
@@ -11,7 +16,9 @@ import {
   benefits,
   exclusions,
   formatRupees,
+  otherAddOnsCount,
   policy,
+  recommendedAddOns,
   waitingPeriods,
   type BenefitTone,
   type WaitTone,
@@ -48,8 +55,98 @@ export function RenewalDeadlineBanner({ className = "" }: { className?: string }
   );
 }
 
-/** Policy coverage summary (nodes 76:5867 - 76:5928). */
-export function PolicySummary() {
+
+type BreakdownRow = {
+  key: string;
+  name: string;
+  price: string;
+  checked: boolean;
+  /** Rows the reviewer picked this session read in the success tone. */
+  highlight?: boolean;
+  tone?: "ink" | "success";
+};
+
+/**
+ * One collapsible block of the premium breakdown on the summary screen
+ * (node 78:6792). Rows carry the same checkbox as the add-ons card.
+ */
+function BreakdownSection({
+  title,
+  count,
+  rows,
+}: {
+  title: string;
+  count: string;
+  rows: BreakdownRow[];
+}) {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <section className="flex flex-col gap-4">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="flex items-center gap-2 text-[14px] leading-none font-medium tracking-[-0.14px] text-ink"
+      >
+        <ChevronDownIcon
+          className={`shrink-0 text-ink transition-transform ${open ? "rotate-180" : ""}`}
+        />
+        {title} <span className="text-link">({count})</span>
+      </button>
+
+      {open ? (
+        <dl className="flex flex-col gap-4">
+          {rows.map((row) => (
+            <div key={row.key} className="flex items-center justify-between gap-4">
+              <dt className="flex items-center gap-2.5 text-[14px] leading-none tracking-[-0.07px] text-ink-secondary">
+                <span
+                  aria-hidden="true"
+                  className={`flex size-4 shrink-0 items-center justify-center rounded p-0.5 ${
+                    row.checked
+                      ? row.tone === "success"
+                        ? "bg-success-solid-strong text-white"
+                        : "bg-ink text-white"
+                      : "border-[1.5px] border-grey-200 bg-white"
+                  }`}
+                >
+                  {row.checked ? <CheckMarkIcon /> : null}
+                </span>
+                {row.name}
+              </dt>
+              <dd
+                className={`ff-figures text-right text-[14px] leading-none font-medium tracking-[-0.14px] ${
+                  row.highlight ? "text-success" : "text-ink"
+                }`}
+              >
+                {row.price}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+    </section>
+  );
+}
+
+/**
+ * Policy coverage summary (nodes 76:5867 - 76:5928).
+ *
+ * `detailed` switches to the variant used on the summary screen
+ * (node 78:6748): the plan row with its Switch link, a green cover and
+ * premium because they were re-checked, and an add-ons breakdown whose
+ * sections collapse and whose rows carry checkboxes.
+ */
+export function PolicySummary({
+  detailed = false,
+  selectedAddOns = [],
+  addedMember,
+}: {
+  detailed?: boolean;
+  selectedAddOns?: string[];
+  /** Relationship of a member added this session, shown as a success badge. */
+  addedMember?: string;
+} = {}) {
   return (
     <div className="flex flex-col gap-4">
       <RenewalDeadlineBanner className="hidden lg:flex" />
@@ -90,6 +187,12 @@ export function PolicySummary() {
                     {member}
                   </li>
                 ))}
+                {addedMember ? (
+                  <li className="ff-case flex items-center justify-center gap-1 rounded-md bg-green-100 px-2 py-[5px] text-[11px] font-medium text-success uppercase">
+                    <UserIcon className="shrink-0 text-success" />
+                    {addedMember}
+                  </li>
+                ) : null}
               </ul>
             </div>
 
@@ -107,7 +210,11 @@ export function PolicySummary() {
                 <dt className="text-[14px] leading-none tracking-[-0.07px] text-ink-secondary">
                   Cover
                 </dt>
-                <dd className="ff-figures text-[18px] leading-[1.4] font-semibold text-ink">
+                <dd
+                  className={`ff-figures text-[18px] leading-[1.4] font-semibold ${
+                    detailed ? "text-success" : "text-ink"
+                  }`}
+                >
                   {policy.cover}
                 </dd>
               </div>
@@ -115,7 +222,11 @@ export function PolicySummary() {
                 <dt className="text-[14px] leading-none tracking-[-0.07px] text-ink-secondary">
                   Premium
                 </dt>
-                <dd className="ff-figures text-[18px] leading-[1.4] font-semibold text-ink">
+                <dd
+                  className={`ff-figures text-[18px] leading-[1.4] font-semibold ${
+                    detailed ? "text-success" : "text-ink"
+                  }`}
+                >
                   {policy.premium} /{" "}
                   <span className="text-[16px] leading-none font-normal tracking-[0.16px] text-ink-faint">
                     {policy.premiumPeriod}
@@ -123,6 +234,20 @@ export function PolicySummary() {
                 </dd>
               </div>
             </dl>
+
+            {detailed ? (
+              <div className="border-t border-grey-200 pt-4">
+                <p className="flex items-center justify-between gap-4 text-[14px] leading-none text-ink">
+                  {policy.planName}
+                  <a
+                    href="#plans"
+                    className="font-medium text-link underline-offset-4 hover:underline"
+                  >
+                    Switch
+                  </a>
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -140,17 +265,57 @@ export function PolicySummary() {
 
             <hr className="border-grey-150" />
 
-            <section className="flex flex-col gap-4">
-              <h4 className="text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
-                Previously Selected Add-ons{" "}
-                <span className="text-info">({policy.previousAddOns.length})</span>
-              </h4>
-              <dl className="flex flex-col gap-4">
-                {policy.previousAddOns.map((addOn) => (
-                  <AddOnRow key={addOn.name} {...addOn} />
-                ))}
-              </dl>
-            </section>
+            {detailed ? (
+              <BreakdownSection
+                title="Previously Selected Add-ons"
+                count={`${policy.previousAddOns.length}`}
+                rows={policy.previousAddOns.map((addOn, index) => ({
+                  key: addOn.name,
+                  name: addOn.name,
+                  price: addOn.price,
+                  checked: true,
+                  highlight: index === 0,
+                }))}
+              />
+            ) : (
+              <section className="flex flex-col gap-4">
+                <h4 className="text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
+                  Previously Selected Add-ons{" "}
+                  <span className="text-info">({policy.previousAddOns.length})</span>
+                </h4>
+                <dl className="flex flex-col gap-4">
+                  {policy.previousAddOns.map((addOn) => (
+                    <AddOnRow key={addOn.name} {...addOn} />
+                  ))}
+                </dl>
+              </section>
+            )}
+
+            {detailed ? (
+              <>
+                <hr className="border-grey-150" />
+                <BreakdownSection
+                  title="Recommended Add-ons"
+                  count={`${selectedAddOns.length}/${recommendedAddOns.length}`}
+                  rows={recommendedAddOns.map((addOn) => ({
+                    key: addOn.id,
+                    name: addOn.name,
+                    price: addOn.priceLabel,
+                    checked: selectedAddOns.includes(addOn.id),
+                    highlight: selectedAddOns.includes(addOn.id),
+                    tone: "success" as const,
+                  }))}
+                />
+                <hr className="border-grey-150" />
+                <div className="flex items-center justify-between gap-4">
+                  <p className="flex items-center gap-2 text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
+                    <ChevronDownIcon className="shrink-0 text-ink" />
+                    Other Add-ons <span className="text-link">(0/{otherAddOnsCount})</span>
+                  </p>
+                  <p className="text-[14px] leading-none text-ink-muted">--</p>
+                </div>
+              </>
+            ) : null}
 
             <hr className="border-grey-150" />
 
@@ -181,7 +346,7 @@ export function PolicySummary() {
         </div>
       </div>
 
-      <PolicyDetailsCard />
+      {detailed ? null : <PolicyDetailsCard />}
     </div>
   );
 }

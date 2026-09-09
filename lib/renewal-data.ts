@@ -102,6 +102,7 @@ export const policy = {
   name: "Optima Secure",
   uin: "UIN NO - CHIHLIP23128V012223",
   insurer: "HDFC ERGO",
+  planName: "Aspire Titanium+",
   members: ["You (45)", "Spouse (42)", "Son (12)", "Daughter (10)"],
   pinCode: "600096, Chennai",
   cover: "₹15 Lakhs",
@@ -367,3 +368,56 @@ export const otherAddOnsCount = 6;
 export function formatRupees(value: number) {
   return `₹${value.toLocaleString("en-IN")}`;
 }
+
+/* ---------------------------------------------------------------------------
+   Policy periods (node 78:6932), shown once the premium has been worked out.
+   --------------------------------------------------------------------------- */
+
+export type PolicyPeriod = {
+  id: string;
+  name: string;
+  description: string;
+  priceLabel: string;
+  /**
+   * Struck-through original. The frame prints ₹5,056 against a ₹55,972
+   * premium; the figure here is the premium plus the saving the same card
+   * quotes, so the discount reads correctly.
+   */
+  wasPriceLabel?: string;
+  saving?: { amount: string; months: string };
+};
+
+export const policyPeriods: PolicyPeriod[] = [
+  {
+    id: "1-year",
+    name: "1 Year Periods",
+    description:
+      "Renew every year. The premium is re-checked at each renewal.",
+    priceLabel: "₹7,730",
+  },
+  {
+    id: "2-year",
+    name: "2 Year Periods",
+    description:
+      "Pay for two years up front and hold this year's rate for both.",
+    priceLabel: "₹55,972",
+    wasPriceLabel: "₹62,401",
+    saving: { amount: "₹6,429", months: "2 months" },
+  },
+  {
+    id: "3-year",
+    name: "3 Year Periods",
+    description:
+      "Pay for three years up front and hold this year's rate for all three.",
+    priceLabel: "₹73,410",
+    saving: { amount: "₹18,599", months: "8 months" },
+  },
+];
+
+export const inflationOffer = {
+  title: "Save 18% on medical inflation",
+  description: "Secure savings with a fixed premium rate despite 20% inflation.",
+};
+
+/** Footnote under the sidebar on the summary screen (node 78:6867). */
+export const digitalDiscountNote = "Total premium included 5% digital discount";

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CalculatingPremium } from "@/components/calculating-premium";
+import { RenewalSummary, type SummaryLine } from "@/components/renewal-summary";
 import { Question } from "@/components/question";
 import { ConditionsTable } from "@/components/conditions-table";
 import {
@@ -23,6 +24,7 @@ import {
 import type { Answer } from "@/components/yes-no-group";
 import {
   bankFormDefaults,
+  coverOptions,
   coveredMembers,
   nomineeCandidates,
   defaultCoverId,
@@ -36,7 +38,7 @@ type Answers = Partial<Record<QuestionId, Answer>>;
 /** How long the premium calculation screen is held before the result shows. */
 const CALCULATING_MS = 3200;
 
-type Status = "review" | "calculating" | "done";
+type Status = "review" | "calculating" | "summary" | "purchased";
 
 const defaultMember: NewMember = {
   fullName: "",
@@ -64,7 +66,6 @@ export function RenewalReview() {
   const [nominees, setNominees] = useState<string[]>(defaultNominees);
   const [addOns, setAddOns] = useState<AddOnState>(defaultAddOns);
   const [status, setStatus] = useState<Status>("review");
-  const resultRef = useRef<HTMLDivElement>(null);
 
   const answeredCount = useMemo(
     () => questions.filter((question) => answers[question.id]).length,
@@ -80,14 +81,79 @@ export function RenewalReview() {
   /* Hold the calculating screen briefly, then show the result. */
   useEffect(() => {
     if (status !== "calculating") return;
-    const timer = window.setTimeout(() => setStatus("done"), CALCULATING_MS);
+    const timer = window.setTimeout(() => setStatus("summary"), CALCULATING_MS);
     return () => window.clearTimeout(timer);
   }, [status]);
 
-  useEffect(() => {
-    if (status !== "done") return;
-    resultRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [status]);
+  /** One confirmation line per question, worded from the answer given. */
+  const summaryLines: SummaryLine[] = useMemo(() => {
+    const changed = (id: QuestionId) => answers[id] === "yes";
+    const coverLabel =
+      coverOptions.find((option) => option.id === cover)?.amount ?? "₹15L";
+
+    return [
+      {
+        id: "location" as QuestionId,
+        changed: changed("location"),
+        text: changed("location")
+          ? `Newly moved address, ${pinCode || "600095"}, Chennai`
+          : "Same address, 600096, Chennai",
+      },
+      {
+        id: "members" as QuestionId,
+        changed: changed("members"),
+        text: changed("members")
+          ? `Now covering ${coveredMembers.length + 1} people, ${
+              member.fullName || "one more member"
+            } added`
+          : `Same ${coveredMembers.length} people covered`,
+      },
+      {
+        id: "conditions" as QuestionId,
+        changed: changed("conditions"),
+        text: changed("conditions")
+          ? "New medical conditions to review with an advisor"
+          : "You have same medical conditions",
+      },
+      {
+        id: "cover" as QuestionId,
+        changed: changed("cover"),
+        text: changed("cover")
+          ? `Cover set to ${coverLabel}`
+          : "Same ₹15 Lakhs cover",
+      },
+      {
+        id: "refund-account" as QuestionId,
+        changed: changed("refund-account"),
+        text: changed("refund-account")
+          ? `New account, ${bankForm.bankName}`
+          : "Same, Deena's Saving Account x5677 (SBI)",
+      },
+      {
+        id: "nominee" as QuestionId,
+        changed: changed("nominee"),
+        text: changed("nominee")
+          ? `Nominee updated, ${nominees.length} named`
+          : "Same nominee, Sneha Kumari, spouse",
+      },
+      {
+        id: "add-ons" as QuestionId,
+        changed: changed("add-ons"),
+        text: changed("add-ons")
+          ? `${addOns.selected.length} add-ons selected`
+          : "No changes in current add-ons.",
+      },
+    ];
+  }, [answers, pinCode, member.fullName, cover, bankForm.bankName, nominees, addOns]);
+
+  function reviewQuestion(id: QuestionId) {
+    setStatus("review");
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById(`${id}-title`)
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+  }
 
   function answer(id: QuestionId, value: Answer) {
     setAnswers((previous) => ({ ...previous, [id]: value }));
@@ -217,6 +283,48 @@ export function RenewalReview() {
     return <CalculatingPremium />;
   }
 
+  if (status === "summary") {
+    return (
+      <RenewalSummary
+        lines={summaryLines}
+        selectedAddOns={addOns.selected}
+        addedMember={
+          answers.members === "yes" && member.relationship
+            ? member.relationship
+            : undefined
+        }
+        onChangeAnswer={reviewQuestion}
+        onBack={() => setStatus("review")}
+        onBuy={() => setStatus("purchased")}
+      />
+    );
+  }
+
+  if (status === "purchased") {
+    return (
+      <main className="mx-auto max-w-[1112px] px-6 pt-10 pb-24 lg:pt-[82px] xl:px-0">
+        <div
+          role="status"
+          className="flex max-w-[689px] flex-col gap-3 rounded-xl border border-grey-150 bg-grey-50 p-5 shadow-card"
+        >
+          <h1 className="text-[20px] leading-[1.3] font-semibold text-ink">
+            Your renewal is confirmed
+          </h1>
+          <p className="text-[16px] leading-[1.5] text-ink-secondary">
+            We&rsquo;ll email the policy document once the insurer issues it.
+          </p>
+          <button
+            type="button"
+            onClick={() => setStatus("summary")}
+            className="self-start text-[15px] font-medium text-link underline-offset-4 hover:underline"
+          >
+            Back to the summary
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto max-w-[1112px] px-6 pt-10 pb-24 lg:pt-[82px] xl:px-0">
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-x-[63px]">
@@ -248,25 +356,6 @@ export function RenewalReview() {
           </ol>
 
           <div className="mt-6 border-t border-grey-150 pt-6">
-            {status === "done" ? (
-              <div
-                ref={resultRef}
-                role="status"
-                className="flex flex-col gap-3 rounded-xl border border-grey-150 bg-grey-50 p-5 shadow-card sm:flex-row sm:items-center sm:justify-between"
-              >
-                <p className="text-[16px] leading-[1.5] text-ink">
-                  Thanks. We&rsquo;ll re-check your premium and send the updated
-                  renewal quote to you.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setStatus("review")}
-                  className="shrink-0 self-start text-[15px] font-medium text-link underline-offset-4 hover:underline sm:self-auto"
-                >
-                  Review answers
-                </button>
-              </div>
-            ) : (
               <div className="flex items-center justify-end gap-3">
                 <p id="confirm-hint" className="sr-only">
                   {complete
@@ -296,7 +385,6 @@ export function RenewalReview() {
                   Confirm &amp; continue
                 </button>
               </div>
-            )}
           </div>
 
           <p aria-live="polite" className="sr-only">

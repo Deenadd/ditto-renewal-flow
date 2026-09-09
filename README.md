@@ -95,6 +95,21 @@ Spacing, type, colour and line breaks match. Decisions worth knowing:
     date input for date of birth rather than a select.
 12. **Other Add-ons.** Only the collapsed row is drawn. Expanding it shows a
     single line pointing to an advisor.
+13. **Primary button fill.** Now `primary/solid/default` (#389BF5), the token
+    the "Buy this policy" button uses. White label text on it sits at about
+    2.9:1, under the 4.5:1 WCAG AA needs at 15px. Worth a darker shade if this
+    goes past prototype.
+14. **Summary lines.** The frame draws six; the build draws seven, adding the
+    cover line so every question is accounted for. The frame also ends the
+    refund-account line with a question mark carried over from the question,
+    which the build drops.
+15. **Policy period copy.** All three cards repeat the Instant Cover
+    description. The build writes copy about the terms themselves. The two-year
+    card is drawn with a ₹5,056 struck price against a ₹55,972 premium; the
+    build uses ₹62,401, the premium plus the saving the same card quotes.
+16. **Summary sidebar figures.** The frame re-ages the members and prices two
+    add-ons differently from its own add-ons card. The build keeps one set of
+    ages and prices throughout.
 
 ## What "Yes" opens
 
@@ -114,10 +129,29 @@ Yes, and resets every answer and follow-up back to the policy on file.
 ## After Confirm & continue
 
 Confirming swaps the page for the "Calculating Premium" screen (node
-`72:3721`), holds it for a few seconds, then returns to the review with the
-result. The calculator is an animated WebP built from the Figma asset, cut from
-4 MB to 97 KB; a still frame is served to anyone who prefers reduced motion and
-to browsers without animated WebP.
+`72:3721`), holds it for a few seconds, then lands on the renewal summary
+(node `78:6737`). The calculator is an animated WebP built from the Figma
+asset, cut from 4 MB to 97 KB; a still frame is served to anyone who prefers
+reduced motion and to browsers without animated WebP.
+
+## The summary screen
+
+One confirmation line per question, worded from the answer given. Lines the
+reviewer changed carry a blue plus and a Change link back to that question;
+the rest carry a green check.
+
+The lines land one at a time, about a third of a second apart, and the policy
+periods follow once the last one is in. Reduced motion collapses the stagger so
+the whole screen arrives at once.
+
+Policy periods offer one, two and three year terms, with the two longer ones
+inside the "Save 18% on medical inflation" panel. "Go back" returns to the
+review; "Buy this policy" confirms.
+
+The sidebar switches to its detailed variant here: the plan row with its Switch
+link, a green cover and premium because they were re-checked, an added member
+shown as a green badge, and a premium breakdown whose sections collapse and
+whose rows carry checkboxes.
 
 Behaviour added on top of the static frames: the Yes/No controls, member form,
 cover picker, bank form, nominee switches, add-on checkboxes and term radios are
