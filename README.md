@@ -144,8 +144,12 @@ reduced motion and to browsers without animated WebP.
 ## The summary screen
 
 One confirmation line per question, worded from the answer given. Lines the
-reviewer changed carry a blue plus and a Change link back to that question;
-the rest carry a green check.
+reviewer changed carry a blue plus and a Change link; the rest carry a green
+check.
+
+Change opens that question's block in place, under the line, rather than
+sending the reviewer back. It is the same block the review page uses, so edits
+land in the same state and the line above rewrites itself as you type.
 
 The lines land one a second, each resolving out of a blur as it settles. The
 policy periods follow a second after the last line, so the screen takes about
@@ -164,9 +168,11 @@ open. A blue banner explains that progress is autosaved, and the sidebar drops
 the deadline banner and the benefits card in favour of a support panel.
 
 The sidebar switches to its detailed variant here: the plan row with its Switch
-link, a green cover and premium because they were re-checked, an added member
-shown as a green badge, and a premium breakdown whose sections collapse and
-whose rows carry checkboxes.
+link, an added member shown as a green badge, and a premium breakdown whose
+sections collapse and whose rows carry checkboxes. Pin code and cover show the
+values the reviewer chose, in green, so the card describes the policy being
+bought rather than the one on file. The premium itself stays as designed, since
+no frame gives the pricing behind a cover change.
 
 Behaviour added on top of the static frames: the Yes/No controls, member form,
 cover picker, bank form, nominee switches, add-on checkboxes and term radios are

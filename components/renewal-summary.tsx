@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PolicySummary, RenewalDeadlineBanner } from "@/components/policy-summary";
 import {
   InformationIcon,
@@ -107,21 +107,27 @@ function PeriodCard({
  */
 export function RenewalSummary({
   lines,
+  editors,
   selectedAddOns,
   addedMember,
-  onChangeAnswer,
+  pinCode,
+  cover,
   onBack,
   onBuy,
 }: {
   lines: SummaryLine[];
+  /** The same follow-up block the review page uses, opened in place here. */
+  editors: Partial<Record<QuestionId, ReactNode>>;
   selectedAddOns: string[];
   addedMember?: string;
-  onChangeAnswer: (id: QuestionId) => void;
+  pinCode?: string;
+  cover?: string;
   onBack: () => void;
   onBuy: () => void;
 }) {
   const [revealed, setRevealed] = useState(0);
   const [period, setPeriod] = useState(policyPeriods[0].id);
+  const [editing, setEditing] = useState<QuestionId | null>(null);
 
   useEffect(() => {
     /* Reduced motion collapses the stagger to nothing, so the whole screen
@@ -173,17 +179,22 @@ export function RenewalSummary({
                   )}
                   <p className="flex min-w-0 flex-1 items-center justify-between gap-4 text-[16px] leading-[1.3] font-medium text-ink">
                     <span className="min-w-0">{line.text}</span>
-                    {line.changed ? (
+                    {line.changed && editors[line.id] ? (
                       <button
                         type="button"
-                        onClick={() => onChangeAnswer(line.id)}
+                        aria-expanded={editing === line.id}
+                        onClick={() =>
+                          setEditing(editing === line.id ? null : line.id)
+                        }
                         className="shrink-0 text-[14px] leading-[1.3] font-medium text-link underline-offset-4 hover:underline"
                       >
-                        Change
+                        {editing === line.id ? "Done" : "Change"}
                       </button>
                     ) : null}
                   </p>
                 </div>
+
+                {editing === line.id ? editors[line.id] : null}
               </li>
             ))}
           </ul>
@@ -256,6 +267,8 @@ export function RenewalSummary({
               variant="summary"
               selectedAddOns={selectedAddOns}
               addedMember={addedMember}
+              pinCode={pinCode}
+              cover={cover}
             />
             <p className="mx-5 mt-4 flex h-8 items-center gap-2 rounded-lg bg-grey-100 px-2.5 text-[13px] leading-none text-ink-secondary">
               <InformationIcon className="shrink-0 text-ink-muted" />

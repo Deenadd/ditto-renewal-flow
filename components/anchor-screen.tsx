@@ -131,11 +131,15 @@ function SupportPanel() {
 export function AnchorScreen({
   selectedAddOns,
   addedMember,
+  pinCode,
+  cover,
   onBack,
   onStart,
 }: {
   selectedAddOns: string[];
   addedMember?: string;
+  pinCode?: string;
+  cover?: string;
   onBack: () => void;
   onStart: () => void;
 }) {
@@ -192,7 +196,13 @@ export function AnchorScreen({
 
         <aside className="mt-12 lg:mt-0">
           <div className="flex flex-col gap-5 lg:sticky lg:top-[88px]">
-            <PolicySummary variant="anchor" selectedAddOns={selectedAddOns} addedMember={addedMember} />
+            <PolicySummary
+              variant="anchor"
+              selectedAddOns={selectedAddOns}
+              addedMember={addedMember}
+              pinCode={pinCode}
+              cover={cover}
+            />
             <SupportPanel />
           </div>
         </aside>

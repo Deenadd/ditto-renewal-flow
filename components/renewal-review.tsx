@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CalculatingPremium } from "@/components/calculating-premium";
 import { AnchorScreen } from "@/components/anchor-screen";
 import { RenewalSummary, type SummaryLine } from "@/components/renewal-summary";
@@ -147,15 +147,6 @@ export function RenewalReview() {
     ];
   }, [answers, pinCode, member.fullName, cover, bankForm.bankName, nominees, addOns]);
 
-  function reviewQuestion(id: QuestionId) {
-    setStatus("review");
-    window.requestAnimationFrame(() => {
-      document
-        .getElementById(`${id}-title`)
-        ?.scrollIntoView({ block: "center", behavior: "smooth" });
-    });
-  }
-
   function answer(id: QuestionId, value: Answer) {
     setAnswers((previous) => ({ ...previous, [id]: value }));
   }
@@ -195,16 +186,85 @@ export function RenewalReview() {
   }
 
   /**
+   * The editable block behind each question. The review page opens it under the
+   * question; the summary opens the same block under its confirmation line.
+   */
+  function followUp(id: QuestionId, context: "review" | "summary"): ReactNode {
+    switch (id) {
+      case "location":
+        return (
+          <LocationFollowUp pinCode={pinCode} onPinCodeChange={setPinCode} />
+        );
+      case "members":
+        return (
+          <MemberFollowUp
+            member={member}
+            showDivider={context === "review"}
+            onChange={(patch) =>
+              setMember((previous) => ({ ...previous, ...patch }))
+            }
+          />
+        );
+      case "conditions":
+        return <ConditionsFollowUp />;
+      case "cover":
+        return <CoverFollowUp selected={cover} onSelect={setCover} />;
+      case "refund-account":
+        return (
+          <BankFollowUp
+            form={bankForm}
+            onChange={(patch) =>
+              setBankForm((previous) => ({ ...previous, ...patch }))
+            }
+          />
+        );
+      case "nominee":
+        return <NomineeFollowUp selected={nominees} onToggle={toggleNominee} />;
+      case "add-ons":
+        return (
+          <AddOnsFollowUp
+            state={addOns}
+            onToggle={toggleAddOn}
+            onTermChange={setAddOnTerm}
+          />
+        );
+      default:
+        return null;
+    }
+  }
+
+  /** The blocks the summary can open in place, one per changed answer. */
+  const summaryEditors = useMemo(() => {
+    const open: Partial<Record<QuestionId, ReactNode>> = {};
+    for (const question of questions) {
+      if (answers[question.id] === "yes") {
+        open[question.id] = followUp(question.id, "summary");
+      }
+    }
+    return open;
+    // followUp reads every piece of follow-up state, all listed here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answers, pinCode, member, cover, bankForm, nominees, addOns]);
+
+  /* Values the reviewer changed, so the sidebar shows the policy being bought. */
+  const pinCodeLabel =
+    answers.location === "yes" && pinCode.length === 6
+      ? `${pinCode}, Chennai`
+      : undefined;
+  const coverLabel =
+    answers.cover === "yes"
+      ? coverOptions.find((option) => option.id === cover)?.sidebarLabel
+      : undefined;
+
+  /**
    * What hangs off each question. Some blocks are always on the page, others
-   * only open once the answer is "No".
+   * only open once the answer is "Yes".
    */
   function attachment(id: QuestionId) {
     const changed = answers[id] === "yes";
 
     if (id === "location") {
-      return changed ? (
-        <LocationFollowUp pinCode={pinCode} onPinCodeChange={setPinCode} />
-      ) : null;
+      return changed ? followUp(id, "review") : null;
     }
 
     if (id === "members") {
@@ -221,14 +281,7 @@ export function RenewalReview() {
               </li>
             ))}
           </ul>
-          {changed ? (
-            <MemberFollowUp
-              member={member}
-              onChange={(patch) =>
-                setMember((previous) => ({ ...previous, ...patch }))
-              }
-            />
-          ) : null}
+          {changed ? followUp(id, "review") : null}
         </>
       );
     }
@@ -239,42 +292,17 @@ export function RenewalReview() {
           <div className="mt-4 sm:ml-[31px]">
             <ConditionsTable />
           </div>
-          {changed ? <ConditionsFollowUp /> : null}
+          {changed ? followUp(id, "review") : null}
         </>
       );
     }
 
     if (id === "cover") {
-      return changed ? (
-        <CoverFollowUp selected={cover} onSelect={setCover} />
-      ) : null;
+      return changed ? followUp(id, "review") : null;
     }
 
-    if (id === "refund-account") {
-      return changed ? (
-        <BankFollowUp
-          form={bankForm}
-          onChange={(patch) =>
-            setBankForm((previous) => ({ ...previous, ...patch }))
-          }
-        />
-      ) : null;
-    }
-
-    if (id === "nominee") {
-      return changed ? (
-        <NomineeFollowUp selected={nominees} onToggle={toggleNominee} />
-      ) : null;
-    }
-
-    if (id === "add-ons") {
-      return changed ? (
-        <AddOnsFollowUp
-          state={addOns}
-          onToggle={toggleAddOn}
-          onTermChange={setAddOnTerm}
-        />
-      ) : null;
+    if (id === "refund-account" || id === "nominee" || id === "add-ons") {
+      return changed ? followUp(id, "review") : null;
     }
 
     return null;
@@ -288,13 +316,15 @@ export function RenewalReview() {
     return (
       <RenewalSummary
         lines={summaryLines}
+        editors={summaryEditors}
+        pinCode={pinCodeLabel}
+        cover={coverLabel}
         selectedAddOns={addOns.selected}
         addedMember={
           answers.members === "yes" && member.relationship
             ? member.relationship
             : undefined
         }
-        onChangeAnswer={reviewQuestion}
         onBack={() => setStatus("review")}
         onBuy={() => setStatus("anchor")}
       />
@@ -304,6 +334,8 @@ export function RenewalReview() {
   if (status === "anchor") {
     return (
       <AnchorScreen
+        pinCode={pinCodeLabel}
+        cover={coverLabel}
         selectedAddOns={addOns.selected}
         addedMember={
           answers.members === "yes" && member.relationship

@@ -141,6 +141,8 @@ export function PolicySummary({
   variant = "review",
   selectedAddOns = [],
   addedMember,
+  pinCode,
+  cover,
 }: {
   /**
    * "review"  the plain breakdown beside the questions
@@ -152,6 +154,9 @@ export function PolicySummary({
   selectedAddOns?: string[];
   /** Relationship of a member added this session, shown as a success badge. */
   addedMember?: string;
+  /** Values the reviewer changed, so the card shows the policy they will buy. */
+  pinCode?: string;
+  cover?: string;
 } = {}) {
   const detailed = variant !== "review";
   const collapsible = variant === "summary";
@@ -211,8 +216,12 @@ export function PolicySummary({
               <h4 className="text-[14px] leading-none tracking-[-0.07px] text-ink-secondary">
                 Pin code
               </h4>
-              <p className="ff-figures text-[18px] leading-[1.4] font-semibold text-ink">
-                {policy.pinCode}
+              <p
+                className={`ff-figures text-[18px] leading-[1.4] font-semibold ${
+                  pinCode ? "text-success" : "text-ink"
+                }`}
+              >
+                {pinCode ?? policy.pinCode}
               </p>
             </div>
 
@@ -226,7 +235,7 @@ export function PolicySummary({
                     detailed ? "text-success" : "text-ink"
                   }`}
                 >
-                  {policy.cover}
+                  {cover ?? policy.cover}
                 </dd>
               </div>
               <div className="flex flex-col gap-2">

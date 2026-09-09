@@ -70,13 +70,16 @@ export type NewMember = {
 export function MemberFollowUp({
   member,
   onChange,
+  showDivider = true,
 }: {
   member: NewMember;
   onChange: (patch: Partial<NewMember>) => void;
+  /** The rule only belongs under the covered-member chips on the review page. */
+  showDivider?: boolean;
 }) {
   return (
     <FollowUp labelledBy="member-heading">
-      <hr className="mb-6 border-grey-150" />
+      {showDivider ? <hr className="mb-6 border-grey-150" /> : null}
       <h3 id="member-heading" className="sr-only">
         Add a family member to the policy
       </h3>

@@ -204,6 +204,8 @@ export const relationshipOptions = [
 export type CoverOption = {
   id: string;
   amount: string;
+  /** How the same amount reads in the sidebar. */
+  sidebarLabel: string;
   title: string;
   description: string;
   /** The amount already on the policy, selected when the block opens. */
@@ -214,6 +216,7 @@ export const coverOptions: CoverOption[] = [
   {
     id: "15l",
     amount: "₹15L",
+    sidebarLabel: "₹15 Lakhs",
     title: "Essential Cover",
     description: "Covers the majority of hospital stays for a family of four.",
     current: true,
@@ -221,12 +224,14 @@ export const coverOptions: CoverOption[] = [
   {
     id: "20l",
     amount: "₹20L",
+    sidebarLabel: "₹20 Lakhs",
     title: "Balanced for your family",
     description: "Big-illness ready. Restoration + bonus stretch it further.",
   },
   {
     id: "25l",
     amount: "₹25L",
+    sidebarLabel: "₹25 Lakhs",
     title: "Maximum cover",
     description: "Highest available across all three shortlisted insurers.",
   },
