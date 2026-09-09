@@ -7,7 +7,7 @@ import { conditionRows } from "@/lib/renewal-data";
  */
 export function ConditionsTable() {
   return (
-    <div className="overflow-hidden rounded-xl border border-grey-150 bg-white pb-[5px] shadow-card">
+    <div className="overflow-hidden rounded-xl border border-grey-150 bg-white shadow-card">
       <div
         role="region"
         aria-label="Members and declared conditions"
@@ -16,8 +16,7 @@ export function ConditionsTable() {
       >
         <table className="w-full min-w-[520px] border-collapse text-left">
           <caption className="sr-only">
-            Members on the policy and the pre-existing conditions already
-            declared for each of them
+            Members with pre-existing conditions already declared on the policy
           </caption>
           <colgroup>
             <col className="w-[203px]" />

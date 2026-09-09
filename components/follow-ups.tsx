@@ -5,6 +5,7 @@ import { FollowUp, FollowUpHeading } from "@/components/follow-up";
 import { SelectField, TextField } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
 import {
+  CheckCircleIcon,
   CircleCheckIcon,
   MarkerPinIcon,
   ShieldCheckIcon,
@@ -16,6 +17,7 @@ import {
   coverOptions,
   householdOptions,
   nomineeCandidates,
+  optionalAddOns,
   type CoverOption,
 } from "@/lib/renewal-data";
 
@@ -316,6 +318,70 @@ export function NomineeFollowUp({
           </li>
         ))}
       </ul>
+    </FollowUp>
+  );
+}
+
+/* -------------------------------------------------------------------------
+   7. Add more add-ons
+   The picker itself is not in a supplied frame; it reuses the selected-card
+   treatment from the cover options, with the add-ons listed in frame 63:2306.
+   ------------------------------------------------------------------------- */
+
+export function AddOnsFollowUp({
+  selected,
+  onToggle,
+}: {
+  selected: string[];
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <FollowUp indent="card" labelledBy="add-ons-heading">
+      <h3 id="add-ons-heading" className="sr-only">
+        Choose the add-ons you want
+      </h3>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {optionalAddOns.map((addOn) => {
+          const isSelected = selected.includes(addOn.id);
+
+          return (
+            <label
+              key={addOn.id}
+              className={`relative flex cursor-pointer items-center justify-between gap-3 bg-white p-4 transition-colors ${
+                isSelected
+                  ? "rounded-[10px] border-[1.5px] border-tier-blue"
+                  : "rounded-xl border border-grey-150 shadow-card hover:border-grey-200"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => onToggle(addOn.id)}
+                className="peer sr-only"
+              />
+              <span className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary" />
+
+              <span className="flex min-w-0 items-center gap-2">
+                {isSelected ? (
+                  <CheckCircleIcon className="shrink-0 text-tier-blue" />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="size-4 shrink-0 rounded-full border-[1.5px] border-grey-200"
+                  />
+                )}
+                <span className="truncate text-[16px] leading-[1.15] font-medium text-ink">
+                  {addOn.name}
+                </span>
+              </span>
+
+              <span className="ff-figures shrink-0 text-[16px] leading-none font-semibold text-ink">
+                {addOn.priceLabel}
+              </span>
+            </label>
+          );
+        })}
+      </div>
     </FollowUp>
   );
 }

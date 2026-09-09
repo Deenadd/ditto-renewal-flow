@@ -3,14 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CalculatingPremium } from "@/components/calculating-premium";
 import { Question } from "@/components/question";
-import { Chip } from "@/components/chip";
 import { ConditionsTable } from "@/components/conditions-table";
-import { BankAccountCard, NomineeCard } from "@/components/detail-cards";
 import {
   PolicySummary,
   RenewalDeadlineBanner,
 } from "@/components/policy-summary";
 import {
+  AddOnsFollowUp,
   BankFollowUp,
   ConditionsFollowUp,
   CoverFollowUp,
@@ -26,6 +25,7 @@ import {
   coveredMembers,
   householdOptions,
   nomineeCandidates,
+  optionalAddOns,
   questions,
   type QuestionId,
 } from "@/lib/renewal-data";
@@ -37,7 +37,6 @@ const CALCULATING_MS = 3200;
 
 type Status = "review" | "calculating" | "done";
 
-const defaultMembers = coveredMembers.map((member) => member.id);
 const defaultHousehold: Household = {
   selected: householdOptions
     .filter((option) => option.onPolicy)
@@ -50,12 +49,12 @@ const defaultNominees = nomineeCandidates
 
 export function RenewalReview() {
   const [answers, setAnswers] = useState<Answers>({});
-  const [selectedMembers, setSelectedMembers] = useState<string[]>(defaultMembers);
   const [pinCode, setPinCode] = useState("");
   const [household, setHousehold] = useState<Household>(defaultHousehold);
   const [cover, setCover] = useState<string | null>(null);
   const [bankForm, setBankForm] = useState<BankForm>({ ...bankFormDefaults });
   const [nominees, setNominees] = useState<string[]>(defaultNominees);
+  const [addOns, setAddOns] = useState<string[]>([]);
   const [status, setStatus] = useState<Status>("review");
   const resultRef = useRef<HTMLDivElement>(null);
 
@@ -66,8 +65,13 @@ export function RenewalReview() {
   const remaining = questions.length - answeredCount;
   const complete = remaining === 0;
   const hasChanges = useMemo(
-    () => questions.some((question) => answers[question.id] === "no"),
+    () => questions.some((question) => answers[question.id] === "yes"),
     [answers],
+  );
+
+  const addedAddOns = useMemo(
+    () => optionalAddOns.filter((addOn) => addOns.includes(addOn.id)),
+    [addOns],
   );
 
   /* Hold the calculating screen briefly, then show the result. */
@@ -86,14 +90,6 @@ export function RenewalReview() {
     setAnswers((previous) => ({ ...previous, [id]: value }));
   }
 
-  function toggleMember(id: string) {
-    setSelectedMembers((previous) =>
-      previous.includes(id)
-        ? previous.filter((member) => member !== id)
-        : [...previous, id],
-    );
-  }
-
   function toggleHousehold(id: string) {
     setHousehold((previous) => ({
       ...previous,
@@ -110,6 +106,14 @@ export function RenewalReview() {
     }));
   }
 
+  function toggleAddOn(id: string) {
+    setAddOns((previous) =>
+      previous.includes(id)
+        ? previous.filter((addOn) => addOn !== id)
+        : [...previous, id],
+    );
+  }
+
   function toggleNominee(id: string) {
     setNominees((previous) =>
       previous.includes(id)
@@ -120,12 +124,12 @@ export function RenewalReview() {
 
   function clearAllChanges() {
     setAnswers({});
-    setSelectedMembers(defaultMembers);
     setPinCode("");
     setHousehold(defaultHousehold);
     setCover(null);
     setBankForm({ ...bankFormDefaults });
     setNominees(defaultNominees);
+    setAddOns([]);
   }
 
   /**
@@ -133,7 +137,7 @@ export function RenewalReview() {
    * only open once the answer is "No".
    */
   function attachment(id: QuestionId) {
-    const changed = answers[id] === "no";
+    const changed = answers[id] === "yes";
 
     if (id === "location") {
       return changed ? (
@@ -144,16 +148,17 @@ export function RenewalReview() {
     if (id === "members") {
       return (
         <>
-          <div className="mt-5 flex flex-wrap items-center gap-2 pl-0 sm:pl-[39px]">
+          {/* Who is on the policy today (node 75:5367), shown for reference. */}
+          <ul className="mt-5 flex flex-wrap items-center gap-2 pl-0 sm:pl-[39px]">
             {coveredMembers.map((member) => (
-              <Chip
+              <li
                 key={member.id}
-                label={member.label}
-                state={selectedMembers.includes(member.id) ? "on" : "off"}
-                onToggle={() => toggleMember(member.id)}
-              />
+                className="flex h-8 items-center rounded-full border border-ink-secondary bg-grey-50 px-3 text-[14px] leading-none font-medium tracking-[-0.14px] text-ink"
+              >
+                {member.label}
+              </li>
             ))}
-          </div>
+          </ul>
           {changed ? (
             <HouseholdFollowUp
               household={household}
@@ -190,21 +195,19 @@ export function RenewalReview() {
             setBankForm((previous) => ({ ...previous, ...patch }))
           }
         />
-      ) : (
-        <div className="mt-4 sm:ml-[31px]">
-          <BankAccountCard />
-        </div>
-      );
+      ) : null;
     }
 
     if (id === "nominee") {
       return changed ? (
         <NomineeFollowUp selected={nominees} onToggle={toggleNominee} />
-      ) : (
-        <div className="mt-4 sm:ml-[31px]">
-          <NomineeCard />
-        </div>
-      );
+      ) : null;
+    }
+
+    if (id === "add-ons") {
+      return changed ? (
+        <AddOnsFollowUp selected={addOns} onToggle={toggleAddOn} />
+      ) : null;
     }
 
     return null;
@@ -303,7 +306,7 @@ export function RenewalReview() {
 
         <aside className="mt-12 lg:mt-0">
           <div className="lg:sticky lg:top-[88px]">
-            <PolicySummary />
+            <PolicySummary addedAddOns={addedAddOns} />
           </div>
         </aside>
       </div>

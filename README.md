@@ -8,8 +8,8 @@ The user confirms seven things before renewing — city, covered members, declar
 conditions, cover amount, refund account, nominee and add-ons — with a live
 policy and premium summary alongside.
 
-Answering **No** to a question opens the matching follow-up beneath it, from the
-"No" variant of the same design (node `70:3126`).
+Every question is phrased so that **Yes** means something has changed, and
+answering Yes opens the matching follow-up beneath it.
 
 ## Stack
 
@@ -63,7 +63,7 @@ public/loading/        Calculator animation for the loading screen
 ## Design fidelity
 
 Rendered output was compared against a native-resolution Figma export at 1440px.
-Spacing, type, colour and line breaks match. Three decisions worth knowing:
+Spacing, type, colour and line breaks match. Decisions worth knowing:
 
 1. **Heading copy.** The Figma frame reads "Quick answers before renwals". The
    build uses the corrected spelling, "renewals".
@@ -73,32 +73,41 @@ Spacing, type, colour and line breaks match. Three decisions worth knowing:
 3. **Add-on count.** The summary reads "Selected Add-ons (1/5)" above a two-row
    list, exactly as drawn. The count is reproduced from the design rather than
    derived from the list length.
-4. **Question copy.** The "No" frame restates four of the seven descriptions
-   with the same placeholder sentence and renames question 2 to "these three
-   people" while still drawing four chips. The build keeps the specific copy
-   from the first frame.
+4. **Question copy.** The latest frame restates five of the seven descriptions
+   with the same placeholder sentence. The build keeps the specific copy from
+   the first frame and writes fresh copy for the new add-ons question.
 5. **Bank block copy.** The "No" frame puts a medical-history sentence under the
    "Bank Details" heading. The build uses copy about the refund account instead.
 6. **Empty pin code.** The design draws the pin code field filled and focused.
    The build starts it empty, since the user has just said the address on file
    is wrong.
-7. **Selected Yes.** Only the selected "No" state is specified, using the error
-   tokens. Selected "Yes" uses the neutral ink fill.
+7. **Selected answer colour.** An earlier frame tinted a selected "No" with the
+   error tokens, when "No" was the answer that opened a follow-up. The
+   questions now put that meaning on "Yes", and colouring "Yes, I want more
+   cover" as an error would read wrong, so both selected states use neutral ink.
+8. **Duplicate add-on row.** The sidebar lists "Cumulative Bonus Super" twice.
+   The second row keeps its price and takes the third add-on name used in the
+   earlier frames.
+9. **Truncated waiting periods.** Two waiting-period captions are drawn
+   mid-truncation ("For diseas..."). The build writes them out in full.
+10. **Add-on picker.** No frame specifies it. It reuses the selected-card
+    treatment from the cover options, and lists the optional add-ons named in
+    the first frame.
 
-## What "No" opens
+## What "Yes" opens
 
-| Question | Answering No reveals |
+| Question | Answering Yes reveals |
 | --- | --- |
-| 1. Still in Chennai? | A pin code field |
-| 2. Still covering these four? | "Who's changed?" with relation chips, and counters on sons and daughters |
-| 3. Same conditions? | A line inviting the user to contact an advisor |
-| 4. Is ₹15 Lakhs enough? | Three cover options to choose from |
-| 5. Same bank account? | A bank form that replaces the read-only card |
-| 6. Sneha still your nominee? | A nominee switch list that replaces the read-only card |
-| 7. Happy with add-ons? | Nothing; the design has no follow-up here |
+| 1. Moved since last year? | A pin code field |
+| 2. Need to add or remove anyone? | "Who's changed?" with relation chips, and counters on sons and daughters |
+| 3. Any new health conditions? | A line inviting the user to contact an advisor |
+| 4. Want to increase your cover? | Three cover options to choose from |
+| 5. Change the refund account? | A bank form |
+| 6. Change the nominee? | A nominee switch list |
+| 7. Add new add-ons? | An add-on picker that feeds the sidebar total |
 
 "Clear all changes" appears in the footer as soon as any question is answered
-No, and resets every answer and follow-up back to the policy on file.
+Yes, and resets every answer and follow-up back to the policy on file.
 
 ## After Confirm & continue
 
@@ -109,8 +118,10 @@ result. The calculator is an animated WebP built from the Figma asset, cut from
 to browsers without animated WebP.
 
 Behaviour added on top of the static frames: the Yes/No controls, chips,
-counters, cover picker, bank form and nominee switches are all interactive, and
-"Confirm & continue" stays disabled until all seven questions are answered.
+counters, cover picker, bank form, nominee switches and add-on picker are all
+interactive, and "Confirm & continue" stays disabled until all seven questions
+are answered. Picking add-ons adds a "New Add-ons" block to the sidebar and
+rolls the prices into the total premium.
 
 ## Accessibility
 

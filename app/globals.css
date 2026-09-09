@@ -65,6 +65,16 @@
   --color-tier-purple: #751ef7;
   --color-tier-purple-bg: #f6f3fa;
 
+
+  /* Policy summary card (node 75:5273) */
+  --color-grey-700: #525454;       /* exclusion copy */
+  --color-tile-green: #5bb98b;     /* Green/Light/8 */
+  --color-tile-orange: #ec9455;    /* Orange/Light/8 */
+  --color-tile-cyan: #3db9cf;      /* Cyan/Light/8 */
+  --color-wait-green: #3f9256;
+  --color-wait-orange: #e16f24;
+  --color-wait-purple: #a475f9;
+
   /* elevation/default.card */
   --shadow-card:
     0 2px 2px 0 rgb(30 37 75 / 0.01),

@@ -1,6 +1,22 @@
 import Image from "next/image";
-import { ClockIcon, UserIcon, VerifiedDiscountIcon } from "@/components/icons";
-import { policy } from "@/lib/renewal-data";
+import {
+  ArrowRightIcon,
+  CalendarIcon,
+  ClockIcon,
+  CloseCircleIcon,
+  UserIcon,
+  VerifiedDiscountIcon,
+} from "@/components/icons";
+import {
+  benefits,
+  exclusions,
+  formatRupees,
+  policy,
+  waitingPeriods,
+  type AddOnOption,
+  type BenefitTone,
+  type WaitTone,
+} from "@/lib/renewal-data";
 
 function AddOnRow({ name, price }: { name: string; price: string }) {
   return (
@@ -15,7 +31,7 @@ function AddOnRow({ name, price }: { name: string; price: string }) {
   );
 }
 
-/** Renewal deadline banner (node 63:2319). */
+/** Renewal deadline banner (node 75:5213). */
 export function RenewalDeadlineBanner({ className = "" }: { className?: string }) {
   return (
     <div
@@ -34,10 +50,14 @@ export function RenewalDeadlineBanner({ className = "" }: { className?: string }
 }
 
 /**
- * Policy coverage summary (nodes 63:2317 - 63:2391).
- * Renewal banner, insurer header block and the premium breakdown.
+ * Policy coverage summary (nodes 75:5211 - 75:5272).
+ * Add-ons the reviewer picks under question 7 are appended to the breakdown
+ * and rolled into the total.
  */
-export function PolicySummary() {
+export function PolicySummary({ addedAddOns }: { addedAddOns: AddOnOption[] }) {
+  const added = addedAddOns.reduce((sum, addOn) => sum + addOn.price, 0);
+  const total = policy.totalPremium + added;
+
   return (
     <div className="flex flex-col gap-4">
       <RenewalDeadlineBanner className="hidden lg:flex" />
@@ -130,33 +150,36 @@ export function PolicySummary() {
 
             <section className="flex flex-col gap-4">
               <h4 className="text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
-                Mandatory Add-ons{" "}
-                <span className="text-info">
-                  ({policy.mandatoryAddOns.length})
-                </span>
+                Previously Selected Add-ons{" "}
+                <span className="text-info">({policy.previousAddOns.length})</span>
               </h4>
               <dl className="flex flex-col gap-4">
-                {policy.mandatoryAddOns.map((addOn) => (
+                {policy.previousAddOns.map((addOn) => (
                   <AddOnRow key={addOn.name} {...addOn} />
                 ))}
               </dl>
             </section>
 
-            <hr className="border-grey-150" />
-
-            <section className="flex flex-col gap-4">
-              <h4 className="text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
-                Selected Add-ons{" "}
-                <span className="text-link">
-                  ({policy.selectedAddOnsCount}/{policy.selectedAddOnsAvailable})
-                </span>
-              </h4>
-              <dl className="flex flex-col gap-4">
-                {policy.selectedAddOns.map((addOn) => (
-                  <AddOnRow key={addOn.name} {...addOn} />
-                ))}
-              </dl>
-            </section>
+            {addedAddOns.length > 0 ? (
+              <>
+                <hr className="border-grey-150" />
+                <section className="flex flex-col gap-4">
+                  <h4 className="text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
+                    New Add-ons{" "}
+                    <span className="text-link">({addedAddOns.length})</span>
+                  </h4>
+                  <dl className="flex flex-col gap-4">
+                    {addedAddOns.map((addOn) => (
+                      <AddOnRow
+                        key={addOn.id}
+                        name={addOn.name}
+                        price={addOn.priceLabel}
+                      />
+                    ))}
+                  </dl>
+                </section>
+              </>
+            ) : null}
 
             <hr className="border-grey-150" />
 
@@ -168,7 +191,7 @@ export function PolicySummary() {
                 </span>
               </p>
               <p className="ff-figures text-right text-[14px] leading-5 font-medium text-ink">
-                {policy.totalPremium}
+                {formatRupees(total)}
               </p>
             </div>
 
@@ -186,6 +209,151 @@ export function PolicySummary() {
           </div>
         </div>
       </div>
+
+      <PolicyDetailsCard />
+    </div>
+  );
+}
+
+const tile: Record<BenefitTone, string> = {
+  green: "bg-tile-green",
+  orange: "bg-tile-orange",
+  cyan: "bg-tile-cyan",
+};
+
+/** Wrapper geometry per exported benefit mark, taken from the Figma node. */
+const art: Record<string, { box: string; inset: string }> = {
+  "/policy/hospital.svg": {
+    box: "left-[6px] top-[6px] size-[20px]",
+    inset: "inset-[-185.39%_-395.42%_-605.44%_-395.41%]",
+  },
+  "/policy/bed1.svg": {
+    box: "left-[6px] top-[6px] size-[20px]",
+    inset: "inset-[-174.38%_-393.75%_-594.38%_-393.75%]",
+  },
+  "/policy/bed2.svg": {
+    box: "left-[7px] top-[8px] h-[15px] w-[18.75px]",
+    inset: "inset-[-247.08%_-426.67%_-807.08%_-426.67%]",
+  },
+};
+
+const waitColor: Record<WaitTone, string> = {
+  green: "text-wait-green",
+  orange: "text-wait-orange",
+  purple: "text-wait-purple",
+};
+
+/** Policy summary (node 75:5273): benefits, waiting periods and exclusions. */
+function PolicyDetailsCard() {
+  return (
+    <div className="flex flex-col gap-5 rounded-2xl border border-grey-150 bg-white p-5 shadow-card">
+      <section className="flex flex-col gap-4">
+        <h3 className="text-[16px] leading-[1.4] font-semibold text-ink">
+          Main Benefits
+        </h3>
+        <ul className="flex flex-col gap-6">
+          {benefits.map((benefit) => (
+            <li
+              key={benefit.title}
+              className={`flex gap-3 ${benefit.multiline ? "items-start" : "items-center"}`}
+            >
+              <span
+                className={`relative block size-8 shrink-0 overflow-hidden rounded-md ${tile[benefit.tone]}`}
+              >
+                <span className={`absolute block ${art[benefit.icon].box}`}>
+                  <span className={`absolute block ${art[benefit.icon].inset}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={benefit.icon}
+                      alt=""
+                      className="block size-full max-w-none"
+                    />
+                  </span>
+                </span>
+              </span>
+              <span className="flex min-w-0 flex-col gap-1.5 text-[13px]">
+                <span className="leading-none font-semibold tracking-[0.0325px] text-ink">
+                  {benefit.title}
+                </span>
+                <span
+                  className={`text-ink-secondary ${
+                    benefit.multiline
+                      ? "leading-[1.5]"
+                      : "leading-none tracking-[0.195px]"
+                  }`}
+                >
+                  {benefit.description}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <hr className="border-grey-150" />
+
+      <section className="flex flex-col gap-4">
+        <h3 className="text-[16px] leading-[1.4] font-semibold text-ink">
+          Waiting Periods
+        </h3>
+        <ul className="grid grid-cols-[1.18fr_1fr_1fr] gap-[18px]">
+          {waitingPeriods.map((period) => (
+            <li key={period.duration} className="flex flex-col">
+              <CalendarIcon className={`shrink-0 ${waitColor[period.tone]}`} />
+              <span className="mt-3.5 text-[13px] leading-none font-semibold tracking-[0.0325px] text-ink">
+                {period.duration}
+              </span>
+              <span className="mt-1.5 text-[13px] leading-[1.5] text-ink-secondary">
+                {period.description}
+                {period.link ? (
+                  <>
+                    {" "}
+                    <a
+                      href="#waiting-periods"
+                      className="inline-flex items-center gap-0.5 font-medium text-link underline-offset-4 hover:underline"
+                    >
+                      {period.link}
+                      <ArrowRightIcon className="shrink-0" size={12} />
+                    </a>
+                  </>
+                ) : null}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <hr className="border-grey-150" />
+
+      <section className="flex flex-col gap-4">
+        <h3 className="text-[16px] leading-[1.4] font-semibold text-ink">
+          What&rsquo;s not covered?
+        </h3>
+        <ul className="flex flex-col gap-3">
+          {exclusions.map((exclusion) => (
+            <li key={exclusion} className="flex items-center gap-2">
+              <CloseCircleIcon className="shrink-0 text-ink-secondary" />
+              <span className="text-[13px] leading-[1.5] text-grey-700">
+                {exclusion}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <hr className="border-grey-150" />
+
+      <p className="text-[14px] leading-none text-ink-secondary">
+        <span className="tracking-[-0.07px]">Know your policy</span>
+        <span> ・ </span>
+        <a
+          href="#policy-wording"
+          className="inline-flex items-center gap-1 font-medium tracking-[-0.14px] text-link underline-offset-4 hover:underline"
+        >
+          View
+          <ArrowRightIcon className="shrink-0" size={12} />
+        </a>
+      </p>
     </div>
   );
 }
