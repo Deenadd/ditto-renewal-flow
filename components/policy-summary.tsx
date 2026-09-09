@@ -13,7 +13,6 @@ import {
   formatRupees,
   policy,
   waitingPeriods,
-  type AddOnOption,
   type BenefitTone,
   type WaitTone,
 } from "@/lib/renewal-data";
@@ -49,15 +48,8 @@ export function RenewalDeadlineBanner({ className = "" }: { className?: string }
   );
 }
 
-/**
- * Policy coverage summary (nodes 75:5211 - 75:5272).
- * Add-ons the reviewer picks under question 7 are appended to the breakdown
- * and rolled into the total.
- */
-export function PolicySummary({ addedAddOns }: { addedAddOns: AddOnOption[] }) {
-  const added = addedAddOns.reduce((sum, addOn) => sum + addOn.price, 0);
-  const total = policy.totalPremium + added;
-
+/** Policy coverage summary (nodes 76:5867 - 76:5928). */
+export function PolicySummary() {
   return (
     <div className="flex flex-col gap-4">
       <RenewalDeadlineBanner className="hidden lg:flex" />
@@ -160,27 +152,6 @@ export function PolicySummary({ addedAddOns }: { addedAddOns: AddOnOption[] }) {
               </dl>
             </section>
 
-            {addedAddOns.length > 0 ? (
-              <>
-                <hr className="border-grey-150" />
-                <section className="flex flex-col gap-4">
-                  <h4 className="text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
-                    New Add-ons{" "}
-                    <span className="text-link">({addedAddOns.length})</span>
-                  </h4>
-                  <dl className="flex flex-col gap-4">
-                    {addedAddOns.map((addOn) => (
-                      <AddOnRow
-                        key={addOn.id}
-                        name={addOn.name}
-                        price={addOn.priceLabel}
-                      />
-                    ))}
-                  </dl>
-                </section>
-              </>
-            ) : null}
-
             <hr className="border-grey-150" />
 
             <div className="flex items-center justify-between gap-4">
@@ -191,7 +162,7 @@ export function PolicySummary({ addedAddOns }: { addedAddOns: AddOnOption[] }) {
                 </span>
               </p>
               <p className="ff-figures text-right text-[14px] leading-5 font-medium text-ink">
-                {formatRupees(total)}
+                {formatRupees(policy.totalPremium)}
               </p>
             </div>
 

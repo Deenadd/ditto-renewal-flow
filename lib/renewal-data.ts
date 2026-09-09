@@ -49,12 +49,12 @@ export const questions: Question[] = [
   },
   {
     id: "refund-account",
-    title: "Change, Deena's Saving Account xxxx5677 (SBI)?",
+    title: "Change, Deena's Saving Account x5677 (SBI)?",
     description: "Used for auto-debit and claim payouts.",
   },
   {
     id: "nominee",
-    title: "Change nominee from Sneha Kumari, spouse?",
+    title: "Change nominee from Sneha Kumari (spouse)?",
     description: "The nominee is who gets paid.",
   },
   {
@@ -188,58 +188,43 @@ export const exclusions = [
    Follow-up content, revealed when a question is answered "Yes".
    --------------------------------------------------------------------------- */
 
-/** Relations offered under "Who's changed?" (nodes 70:3345 - 70:3376). */
-export type HouseholdOption = {
-  id: string;
-  label: string;
-  onPolicy: boolean;
-  counted?: boolean;
-};
-
-export const householdOptions: HouseholdOption[] = [
-  { id: "you", label: "You", onPolicy: true },
-  { id: "spouse", label: "Spouse", onPolicy: true },
-  { id: "sons", label: "Son(s)", onPolicy: true, counted: true },
-  { id: "daughters", label: "Daughter(s)", onPolicy: true, counted: true },
-  { id: "father", label: "Father", onPolicy: false },
-  { id: "mother", label: "Mother", onPolicy: false },
-  { id: "father-in-law", label: "Father in law", onPolicy: false },
-  { id: "mother-in-law", label: "Mother in law", onPolicy: false },
+/** Relationship choices in the add-a-member form (node 76:6185). */
+export const relationshipOptions = [
+  "Spouse",
+  "Son",
+  "Daughter",
+  "Father",
+  "Mother",
+  "Father in law",
+  "Mother in law",
 ];
 
-/** Cover options (nodes 70:3380, 70:3394, 70:3407). */
+/** Cover options (node 76:6127). */
 export type CoverOption = {
   id: string;
   amount: string;
   title: string;
   description: string;
-  badge?: string;
-  tone: "blue" | "green" | "purple";
 };
 
 export const coverOptions: CoverOption[] = [
   {
-    id: "5l",
-    amount: "₹5L",
-    title: "Essential Cover",
-    description: "Covers the majority of hospital stays for a family of four.",
-    tone: "blue",
-  },
-  {
-    id: "10l",
-    amount: "₹10L",
-    title: "Balanced for your family",
-    description: "Big-illness ready. Restoration + bonus stretch it further.",
-    badge: "Recommended",
-    tone: "green",
-  },
-  {
     id: "15l",
     amount: "₹15L",
+    title: "Essential Cover",
+    description: "Covers the majority of hospital stays for a family of four.",
+  },
+  {
+    id: "20l",
+    amount: "₹20L",
+    title: "Balanced for your family",
+    description: "Big-illness ready. Restoration + bonus stretch it further.",
+  },
+  {
+    id: "25l",
+    amount: "₹25L",
     title: "Maximum cover",
     description: "Highest available across all three shortlisted insurers.",
-    badge: "Max cover",
-    tone: "purple",
   },
 ];
 
@@ -281,25 +266,96 @@ export const nomineeCandidates: NomineeCandidate[] = [
 ];
 
 /**
- * Add-ons offered under question 7. Names and prices are the optional add-ons
- * listed in frame 63:2306; the picker itself is not in any supplied frame.
+ * Add-ons card under question 7 (node 76:6225).
+ *
+ * The card lists the add-ons already on the policy, five recommended ones the
+ * reviewer can pick, and a collapsed group holding the rest of the catalogue.
  */
-export type AddOnOption = {
-  id: string;
-  name: string;
-  price: number;
-  priceLabel: string;
+export type Highlight = {
+  before?: string;
+  strong?: string;
+  after?: string;
 };
 
-export const optionalAddOns: AddOnOption[] = [
-  { id: "instant-cover", name: "Instant Cover", price: 5056, priceLabel: "₹5,056" },
+export type RecommendedAddOn = {
+  id: string;
+  name: string;
+  description: string;
+  priceLabel: string;
+  /** Struck-through original, shown when the premium is discounted. */
+  wasPriceLabel?: string;
+  highlight: Highlight;
+  /** Term choices rendered as radios inside the card. */
+  terms?: string[];
+  defaultSelected?: boolean;
+};
+
+export const recommendedAddOns: RecommendedAddOn[] = [
+  {
+    id: "instant-cover",
+    name: "Instant Cover",
+    description:
+      "This add on will cut waiting periods to a mere 30 days for Hypertension/Diabetes/Hyperlipidaemia/Asthma",
+    priceLabel: "₹1,264",
+    wasPriceLabel: "₹5,056",
+    highlight: {
+      before: "This month, we've seen a ",
+      strong: "75% significant decrease",
+      after: " in premium prices!",
+    },
+    defaultSelected: true,
+  },
   {
     id: "unlimited-restoration",
     name: "Unlimited Restoration",
-    price: 7730,
+    description:
+      "This optional cover reduces the applicable waiting period from 48 months to 12 months.",
     priceLabel: "₹7,730",
+    highlight: { before: "Restore your safety net anytime stay covered, always!" },
+  },
+  {
+    id: "reduction-in-ped",
+    name: "Reduction in PED",
+    description: "Covers non-payable items like syringes, gloves & PPE kits.",
+    priceLabel: "₹3,650",
+    terms: ["1 Year", "2 Year"],
+    highlight: {
+      strong: "Only ₹10 a day,",
+      after: " which can save you over a lakh.",
+    },
+  },
+  {
+    id: "opd-care",
+    name: "OPD Care",
+    description:
+      "With this addon, each insured member can avail up to 4 in-person consultations with a General Physician and 4 with a Specified Specialist annually, with a maximum reimbursement of Rs. 500 per visit.",
+    priceLabel: "₹2,726",
+    highlight: {
+      strong: "8 consults a year,",
+      after: " ₹500 back each time care made effortless!",
+    },
+  },
+  {
+    id: "be-fit-benefit",
+    name: "Be-Fit Benefit",
+    description:
+      "This add-on provides insured members aged 12 and above with unlimited access to gyms listed by the service provider.",
+    priceLabel: "₹1,455",
+    highlight: {
+      strong: "Unlimited gym access",
+      after: " in your location because your health is your wealth!",
+    },
   },
 ];
+
+/**
+ * Add-ons already on the policy. The card draws all three at ₹2,419; the
+ * distinct prices from the sidebar breakdown are used instead.
+ */
+export const lockedAddOns = policy.previousAddOns;
+
+/** The collapsed group at the foot of the card (node 76:6246). */
+export const otherAddOnsCount = 6;
 
 /** ₹ formatting that matches the figures already on the page. */
 export function formatRupees(value: number) {

@@ -30,6 +30,8 @@ type TextFieldProps = {
   maxLength?: number;
   labelSize?: "sm" | "md";
   gap?: "sm" | "md";
+  placeholder?: string;
+  type?: "text" | "date";
 };
 
 /** input (nodes 70:3336, 70:3426). */
@@ -42,6 +44,8 @@ export function TextField({
   maxLength,
   labelSize = "sm",
   gap = "sm",
+  placeholder,
+  type = "text",
 }: TextFieldProps) {
   const id = useId();
 
@@ -53,11 +57,13 @@ export function TextField({
       <span className={control}>
         <input
           id={id}
+          type={type}
           value={value}
+          placeholder={placeholder}
           inputMode={inputMode}
           maxLength={maxLength}
           onChange={(event) => onChange(event.target.value)}
-          className="ff-case min-w-0 flex-1 bg-transparent outline-none"
+          className="ff-case min-w-0 flex-1 bg-transparent font-medium outline-none placeholder:font-normal placeholder:text-ink-muted"
         />
         {suffix ? <span className="flex shrink-0 items-center">{suffix}</span> : null}
       </span>
@@ -70,10 +76,17 @@ type SelectFieldProps = {
   value: string;
   options: string[];
   onChange: (value: string) => void;
+  placeholder?: string;
 };
 
 /** select (nodes 70:3434, 70:3437). */
-export function SelectField({ label, value, options, onChange }: SelectFieldProps) {
+export function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+}: SelectFieldProps) {
   const id = useId();
 
   return (
@@ -86,8 +99,15 @@ export function SelectField({ label, value, options, onChange }: SelectFieldProp
           id={id}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="ff-case min-w-0 flex-1 appearance-none bg-transparent pr-5 outline-none"
+          className={`ff-case min-w-0 flex-1 appearance-none bg-transparent pr-5 outline-none ${
+            value === "" ? "text-ink-muted" : ""
+          }`}
         >
+          {placeholder ? (
+            <option value="" disabled>
+              {placeholder}
+            </option>
+          ) : null}
           {options.map((option) => (
             <option key={option} value={option}>
               {option}

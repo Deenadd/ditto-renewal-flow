@@ -75,6 +75,14 @@
   --color-wait-orange: #e16f24;
   --color-wait-purple: #a475f9;
 
+
+  /* Add-ons card and answer states (node 76:5856) */
+  --color-success-solid-strong: #3f9256; /* success/default - selected "Yes" */
+  --color-green-11: #218358;             /* highlight copy */
+  --color-green-9: #30a46c;              /* discounted premium */
+  --color-badge-blue: #0e9dff;           /* count badges */
+  --color-slate-6: #d9d9e0;              /* Other Add-ons hairline */
+
   /* elevation/default.card */
   --shadow-card:
     0 2px 2px 0 rgb(30 37 75 / 0.01),

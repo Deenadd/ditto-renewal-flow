@@ -13,19 +13,19 @@ import {
   BankFollowUp,
   ConditionsFollowUp,
   CoverFollowUp,
-  HouseholdFollowUp,
   LocationFollowUp,
+  MemberFollowUp,
   NomineeFollowUp,
+  type AddOnState,
   type BankForm,
-  type Household,
+  type NewMember,
 } from "@/components/follow-ups";
 import type { Answer } from "@/components/yes-no-group";
 import {
   bankFormDefaults,
   coveredMembers,
-  householdOptions,
   nomineeCandidates,
-  optionalAddOns,
+  recommendedAddOns,
   questions,
   type QuestionId,
 } from "@/lib/renewal-data";
@@ -37,11 +37,18 @@ const CALCULATING_MS = 3200;
 
 type Status = "review" | "calculating" | "done";
 
-const defaultHousehold: Household = {
-  selected: householdOptions
-    .filter((option) => option.onPolicy)
-    .map((option) => option.id),
-  counts: { sons: 1, daughters: 1 },
+const defaultMember: NewMember = {
+  fullName: "",
+  relationship: "",
+  dateOfBirth: "",
+  hasConditions: null,
+};
+
+const defaultAddOns: AddOnState = {
+  selected: recommendedAddOns
+    .filter((addOn) => addOn.defaultSelected)
+    .map((addOn) => addOn.id),
+  terms: {},
 };
 const defaultNominees = nomineeCandidates
   .filter((candidate) => candidate.current)
@@ -50,11 +57,11 @@ const defaultNominees = nomineeCandidates
 export function RenewalReview() {
   const [answers, setAnswers] = useState<Answers>({});
   const [pinCode, setPinCode] = useState("");
-  const [household, setHousehold] = useState<Household>(defaultHousehold);
+  const [member, setMember] = useState<NewMember>(defaultMember);
   const [cover, setCover] = useState<string | null>(null);
   const [bankForm, setBankForm] = useState<BankForm>({ ...bankFormDefaults });
   const [nominees, setNominees] = useState<string[]>(defaultNominees);
-  const [addOns, setAddOns] = useState<string[]>([]);
+  const [addOns, setAddOns] = useState<AddOnState>(defaultAddOns);
   const [status, setStatus] = useState<Status>("review");
   const resultRef = useRef<HTMLDivElement>(null);
 
@@ -67,11 +74,6 @@ export function RenewalReview() {
   const hasChanges = useMemo(
     () => questions.some((question) => answers[question.id] === "yes"),
     [answers],
-  );
-
-  const addedAddOns = useMemo(
-    () => optionalAddOns.filter((addOn) => addOns.includes(addOn.id)),
-    [addOns],
   );
 
   /* Hold the calculating screen briefly, then show the result. */
@@ -90,28 +92,20 @@ export function RenewalReview() {
     setAnswers((previous) => ({ ...previous, [id]: value }));
   }
 
-  function toggleHousehold(id: string) {
-    setHousehold((previous) => ({
+  function toggleAddOn(id: string) {
+    setAddOns((previous) => ({
       ...previous,
       selected: previous.selected.includes(id)
-        ? previous.selected.filter((member) => member !== id)
+        ? previous.selected.filter((addOn) => addOn !== id)
         : [...previous.selected, id],
     }));
   }
 
-  function setHouseholdCount(id: string, next: number) {
-    setHousehold((previous) => ({
+  function setAddOnTerm(id: string, term: string) {
+    setAddOns((previous) => ({
       ...previous,
-      counts: { ...previous.counts, [id]: next },
+      terms: { ...previous.terms, [id]: term },
     }));
-  }
-
-  function toggleAddOn(id: string) {
-    setAddOns((previous) =>
-      previous.includes(id)
-        ? previous.filter((addOn) => addOn !== id)
-        : [...previous, id],
-    );
   }
 
   function toggleNominee(id: string) {
@@ -125,11 +119,11 @@ export function RenewalReview() {
   function clearAllChanges() {
     setAnswers({});
     setPinCode("");
-    setHousehold(defaultHousehold);
+    setMember(defaultMember);
     setCover(null);
     setBankForm({ ...bankFormDefaults });
     setNominees(defaultNominees);
-    setAddOns([]);
+    setAddOns(defaultAddOns);
   }
 
   /**
@@ -160,10 +154,11 @@ export function RenewalReview() {
             ))}
           </ul>
           {changed ? (
-            <HouseholdFollowUp
-              household={household}
-              onToggle={toggleHousehold}
-              onCountChange={setHouseholdCount}
+            <MemberFollowUp
+              member={member}
+              onChange={(patch) =>
+                setMember((previous) => ({ ...previous, ...patch }))
+              }
             />
           ) : null}
         </>
@@ -206,7 +201,11 @@ export function RenewalReview() {
 
     if (id === "add-ons") {
       return changed ? (
-        <AddOnsFollowUp selected={addOns} onToggle={toggleAddOn} />
+        <AddOnsFollowUp
+          state={addOns}
+          onToggle={toggleAddOn}
+          onTermChange={setAddOnTerm}
+        />
       ) : null;
     }
 
@@ -306,7 +305,7 @@ export function RenewalReview() {
 
         <aside className="mt-12 lg:mt-0">
           <div className="lg:sticky lg:top-[88px]">
-            <PolicySummary addedAddOns={addedAddOns} />
+            <PolicySummary />
           </div>
         </aside>
       </div>

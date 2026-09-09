@@ -44,12 +44,10 @@ components/
   renewal-review.tsx   Client component holding all answer state
   question.tsx         One numbered question row
   yes-no-group.tsx     Accessible Yes/No radio pair
-  chip.tsx             Toggleable pill, optionally with a counter
   conditions-table.tsx Pre-existing conditions table
-  detail-cards.tsx     Read-only refund account and nominee cards
   policy-summary.tsx   Deadline banner and premium breakdown
   follow-up.tsx        Shell and heading for a revealed follow-up
-  follow-ups.tsx       The six follow-up blocks
+  follow-ups.tsx       The seven follow-up blocks
   calculating-premium.tsx  Full-page loading screen after Confirm & continue
   icons.tsx            Icons inlined from the Figma export
   ui/field.tsx         Text input and select
@@ -81,30 +79,34 @@ Spacing, type, colour and line breaks match. Decisions worth knowing:
 6. **Empty pin code.** The design draws the pin code field filled and focused.
    The build starts it empty, since the user has just said the address on file
    is wrong.
-7. **Selected answer colour.** An earlier frame tinted a selected "No" with the
-   error tokens, when "No" was the answer that opened a follow-up. The
-   questions now put that meaning on "Yes", and colouring "Yes, I want more
-   cover" as an error would read wrong, so both selected states use neutral ink.
-8. **Duplicate add-on row.** The sidebar lists "Cumulative Bonus Super" twice.
-   The second row keeps its price and takes the third add-on name used in the
-   earlier frames.
+7. **Selected answer colour.** A selected "Yes" uses the success tokens, as
+   drawn. Only that state is specified, so a selected "No" falls back to
+   neutral ink.
+8. **Duplicate rows.** The sidebar lists "Cumulative Bonus Super" twice, and the
+   add-ons card prices all three locked add-ons at ₹2,419. The build uses the
+   three distinct names and the three distinct prices.
 9. **Truncated waiting periods.** Two waiting-period captions are drawn
    mid-truncation ("For diseas..."). The build writes them out in full.
-10. **Add-on picker.** No frame specifies it. It reuses the selected-card
-    treatment from the cover options, and lists the optional add-ons named in
-    the first frame.
+10. **Two titles differ between frames.** The initial frame reads "xxxx5677" and
+    "Sneha Kumari, spouse"; the expanded frame reads "x5677" and "Sneha Kumari
+    (spouse)". The build follows the later frame.
+11. **Member form values.** The frame fills the add-a-member form with the bank
+    form's values. The build ships empty fields with placeholders, and uses a
+    date input for date of birth rather than a select.
+12. **Other Add-ons.** Only the collapsed row is drawn. Expanding it shows a
+    single line pointing to an advisor.
 
 ## What "Yes" opens
 
 | Question | Answering Yes reveals |
 | --- | --- |
 | 1. Moved since last year? | A pin code field |
-| 2. Need to add or remove anyone? | "Who's changed?" with relation chips, and counters on sons and daughters |
+| 2. Need to add or remove anyone? | A form to add a member, plus a notice that removals go through an advisor |
 | 3. Any new health conditions? | A line inviting the user to contact an advisor |
-| 4. Want to increase your cover? | Three cover options to choose from |
+| 4. Want to increase your cover? | Three cover options, ₹15L, ₹20L and ₹25L |
 | 5. Change the refund account? | A bank form |
 | 6. Change the nominee? | A nominee switch list |
-| 7. Add new add-ons? | An add-on picker that feeds the sidebar total |
+| 7. Add new add-ons? | The add-ons card: three locked, five recommended, and a collapsed group |
 
 "Clear all changes" appears in the footer as soon as any question is answered
 Yes, and resets every answer and follow-up back to the policy on file.
@@ -117,11 +119,10 @@ result. The calculator is an animated WebP built from the Figma asset, cut from
 4 MB to 97 KB; a still frame is served to anyone who prefers reduced motion and
 to browsers without animated WebP.
 
-Behaviour added on top of the static frames: the Yes/No controls, chips,
-counters, cover picker, bank form, nominee switches and add-on picker are all
-interactive, and "Confirm & continue" stays disabled until all seven questions
-are answered. Picking add-ons adds a "New Add-ons" block to the sidebar and
-rolls the prices into the total premium.
+Behaviour added on top of the static frames: the Yes/No controls, member form,
+cover picker, bank form, nominee switches, add-on checkboxes and term radios are
+all interactive, and "Confirm & continue" stays disabled until all seven
+questions are answered.
 
 ## Accessibility
 

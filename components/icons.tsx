@@ -384,3 +384,98 @@ export function ArrowRightIcon({ className, size = 14 }: IconProps) {
     </svg>
   );
 }
+
+/* -------------------------------------------------------------------------
+   Icons introduced by the add-ons card and member form (node 76:5856).
+   ------------------------------------------------------------------------- */
+
+/** icon/check, 12x12, sits inside a filled checkbox. */
+export function CheckMarkIcon({ className, size = 12 }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 12 12"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.65728 2.26083C9.8919 1.98921 10.3026 1.9589 10.5743 2.19344C10.8456 2.42804 10.876 2.83883 10.6417 3.11044L5.01373 9.62606C4.89183 9.7672 4.71484 9.84966 4.52837 9.85165C4.34203 9.85346 4.16385 9.77428 4.03912 9.63583L1.3731 6.67489C1.13296 6.40807 1.15513 5.99707 1.42193 5.75692C1.68876 5.51685 2.09977 5.53797 2.3399 5.80477L4.51177 8.21786L9.65728 2.26083Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+/** icon/attention, 14x14, marks an add-on that carries policy terms. */
+export function AttentionIcon({ className, size = 14 }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 14 14"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M7 4.66667V7M7 9.33333H7.00583M12.8333 7C12.8333 10.2216 10.2216 12.8333 7 12.8333C3.77834 12.8333 1.16667 10.2216 1.16667 7C1.16667 3.77834 3.77834 1.16667 7 1.16667C10.2216 1.16667 12.8333 3.77834 12.8333 7Z"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** icon/solid/information, 20x20, leads the advisor notice. */
+export function InformationIcon({ className, size = 20 }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M10 0.833333C4.93739 0.833333 0.833333 4.93739 0.833333 10C0.833333 15.0626 4.93739 19.1667 10 19.1667C15.0626 19.1667 19.1667 15.0626 19.1667 10C19.1667 4.93739 15.0626 0.833333 10 0.833333ZM10 5.83333C9.53975 5.83333 9.16667 6.20643 9.16667 6.66667C9.16667 7.1269 9.53975 7.5 10 7.5H10.0083C10.4686 7.5 10.8417 7.1269 10.8417 6.66667C10.8417 6.20643 10.4686 5.83333 10.0083 5.83333H10ZM10.8333 10C10.8333 9.53975 10.4603 9.16667 10 9.16667C9.53975 9.16667 9.16667 9.53975 9.16667 10V13.3333C9.16667 13.7936 9.53975 14.1667 10 14.1667C10.4603 14.1667 10.8333 13.7936 10.8333 13.3333V10Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+/** check-circle.3, 20x20 solid, marks the chosen cover amount. */
+export function CheckCircleSolidIcon({ className, size = 20 }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M10.0007 0.835938C4.93804 0.835938 0.833984 4.94 0.833984 10.0026C0.833984 15.0652 4.93804 19.1693 10.0007 19.1693C15.0632 19.1693 19.1673 15.0652 19.1673 10.0026C19.1673 4.94 15.0632 0.835938 10.0007 0.835938ZM14.3399 8.09186C14.6653 7.76642 14.6653 7.23879 14.3399 6.91335C14.0145 6.58791 13.4868 6.58791 13.1614 6.91335L8.75065 11.3241L6.83991 9.41335C6.51447 9.08794 5.98683 9.08794 5.66139 9.41335C5.33596 9.73877 5.33596 10.2664 5.66139 10.5919L8.16139 13.0919C8.48682 13.4173 9.01448 13.4173 9.3399 13.0919L14.3399 8.09186Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}

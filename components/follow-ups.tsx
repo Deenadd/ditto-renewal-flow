@@ -1,28 +1,33 @@
 "use client";
 
-import { Chip, type ChipState } from "@/components/chip";
-import { FollowUp, FollowUpHeading } from "@/components/follow-up";
+import { useState } from "react";
+
+import { FollowUp } from "@/components/follow-up";
 import { SelectField, TextField } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
+import { YesNoGroup, type Answer } from "@/components/yes-no-group";
 import {
-  CheckCircleIcon,
-  CircleCheckIcon,
+  AttentionIcon,
+  CheckCircleSolidIcon,
+  CheckMarkIcon,
+  ChevronDownIcon,
+  InformationIcon,
   MarkerPinIcon,
-  ShieldCheckIcon,
-  ShieldSparkIcon,
 } from "@/components/icons";
 import {
   accountTypeOptions,
   bankNameOptions,
   coverOptions,
-  householdOptions,
+  lockedAddOns,
   nomineeCandidates,
-  optionalAddOns,
-  type CoverOption,
+  otherAddOnsCount,
+  recommendedAddOns,
+  relationshipOptions,
+  type Highlight,
 } from "@/lib/renewal-data";
 
 /* -------------------------------------------------------------------------
-   1. Where do you live? (node 70:3333)
+   1. Where do you live? (node 76:6121)
    ------------------------------------------------------------------------- */
 
 export function LocationFollowUp({
@@ -42,6 +47,7 @@ export function LocationFollowUp({
           value={pinCode}
           inputMode="numeric"
           maxLength={6}
+          placeholder="6-digit PIN code"
           onChange={(value) => onPinCodeChange(value.replace(/\D/g, ""))}
           suffix={<MarkerPinIcon className="text-icon-muted" />}
         />
@@ -51,67 +57,89 @@ export function LocationFollowUp({
 }
 
 /* -------------------------------------------------------------------------
-   2. Who's changed? (nodes 70:3252, 70:3337, 70:3343)
+   2. Add a member (nodes 76:6175, 76:6254)
    ------------------------------------------------------------------------- */
 
-export type Household = {
-  selected: string[];
-  counts: Record<string, number>;
+export type NewMember = {
+  fullName: string;
+  relationship: string;
+  dateOfBirth: string;
+  hasConditions: Answer | null;
 };
 
-export function HouseholdFollowUp({
-  household,
-  onToggle,
-  onCountChange,
+export function MemberFollowUp({
+  member,
+  onChange,
 }: {
-  household: Household;
-  onToggle: (id: string) => void;
-  onCountChange: (id: string, next: number) => void;
+  member: NewMember;
+  onChange: (patch: Partial<NewMember>) => void;
 }) {
   return (
-    <FollowUp labelledBy="household-heading">
+    <FollowUp labelledBy="member-heading">
       <hr className="mb-6 border-grey-150" />
-      <FollowUpHeading
-        id="household-heading"
-        title="Who's changed?"
-        description="Remove those who don't need cover or add new family members."
-      />
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-3">
-        {householdOptions.map((option) => {
-          const selected = household.selected.includes(option.id);
-          const state: ChipState = !selected
-            ? "off"
-            : option.onPolicy
-              ? "on"
-              : "added";
+      <h3 id="member-heading" className="sr-only">
+        Add a family member to the policy
+      </h3>
 
-          return (
-            <Chip
-              key={option.id}
-              label={option.label}
-              state={state}
-              onToggle={() => onToggle(option.id)}
-              counter={
-                option.counted && selected
-                  ? {
-                      value: household.counts[option.id] ?? 1,
-                      min: 1,
-                      max: 9,
-                      label: option.label,
-                      onChange: (next) => onCountChange(option.id, next),
-                    }
-                  : undefined
-              }
-            />
-          );
-        })}
+      <div className="flex flex-col gap-6">
+        <TextField
+          label="Full name (as on PAN or Aadhaar)"
+          value={member.fullName}
+          placeholder="Full name"
+          onChange={(value) => onChange({ fullName: value })}
+        />
+
+        <div className="grid gap-6 sm:grid-cols-2">
+          <SelectField
+            label="Relationship"
+            value={member.relationship}
+            options={relationshipOptions}
+            placeholder="Select relationship"
+            onChange={(value) => onChange({ relationship: value })}
+          />
+          <TextField
+            label="Date of birth"
+            type="date"
+            value={member.dateOfBirth}
+            onChange={(value) => onChange({ dateOfBirth: value })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-6">
+          <p
+            id="member-conditions-label"
+            className="text-[14px] leading-[1.15] text-ink-secondary"
+          >
+            Does this member have any existing medical conditions?
+          </p>
+          <YesNoGroup
+            name="member-conditions"
+            value={member.hasConditions}
+            onChange={(value) => onChange({ hasConditions: value })}
+            labelledBy="member-conditions-label"
+          />
+        </div>
+
+        <p className="flex items-start gap-2 rounded-lg bg-grey-100 p-2.5 text-[14px] leading-[1.4] tracking-[0.035px] text-ink">
+          <InformationIcon className="mt-0.5 shrink-0 text-ink" />
+          <span>
+            Removing someone is still being confirmed with HDFC ERGO, so an
+            advisor handles it for now -{" "}
+            <a
+              href="mailto:support@example.com"
+              className="font-semibold text-link underline-offset-4 hover:underline"
+            >
+              request a callback.
+            </a>
+          </span>
+        </p>
       </div>
     </FollowUp>
   );
 }
 
 /* -------------------------------------------------------------------------
-   3. Anything come up this year? (node 70:3377)
+   3. Anything come up this year? (node 76:6125)
    ------------------------------------------------------------------------- */
 
 export function ConditionsFollowUp() {
@@ -131,26 +159,8 @@ export function ConditionsFollowUp() {
 }
 
 /* -------------------------------------------------------------------------
-   4. Pick a cover amount (node 70:3379)
+   4. Pick a cover amount (node 76:6127)
    ------------------------------------------------------------------------- */
-
-const tierMark = {
-  blue: CircleCheckIcon,
-  green: ShieldCheckIcon,
-  purple: ShieldSparkIcon,
-};
-
-const tierColor: Record<CoverOption["tone"], string> = {
-  blue: "text-tier-blue",
-  green: "text-tier-green",
-  purple: "text-tier-purple",
-};
-
-const tierBadge: Record<CoverOption["tone"], string> = {
-  blue: "bg-tier-blue-bg text-tier-blue",
-  green: "bg-tier-green-bg text-tier-green",
-  purple: "bg-tier-purple-bg text-tier-purple",
-};
 
 export function CoverFollowUp({
   selected,
@@ -170,13 +180,12 @@ export function CoverFollowUp({
         className="grid gap-3 sm:grid-cols-3"
       >
         {coverOptions.map((option) => {
-          const Mark = tierMark[option.tone];
           const isSelected = selected === option.id;
 
           return (
             <label
               key={option.id}
-              className={`relative flex min-h-[173px] cursor-pointer flex-col overflow-hidden bg-white p-[15px] transition-colors ${
+              className={`relative flex min-h-[129px] cursor-pointer flex-col bg-white p-[15px] transition-colors ${
                 isSelected
                   ? "rounded-[10px] border-[1.5px] border-tier-blue"
                   : "rounded-xl border border-grey-150 shadow-card hover:border-grey-200"
@@ -192,19 +201,11 @@ export function CoverFollowUp({
               />
               <span className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary" />
 
-              <Mark className={`shrink-0 ${tierColor[option.tone]}`} />
-
-              {isSelected || option.badge ? (
-                <span
-                  className={`ff-case absolute top-[5px] right-[7px] rounded-3xl px-1.5 py-0.5 text-[8px] leading-none font-medium tracking-[0.2px] uppercase ${
-                    isSelected ? tierBadge.blue : tierBadge[option.tone]
-                  }`}
-                >
-                  {isSelected ? "Selected" : option.badge}
-                </span>
+              {isSelected ? (
+                <CheckCircleSolidIcon className="absolute top-1.5 right-2.5 text-focus" />
               ) : null}
 
-              <span className="ff-figures mt-5 text-[24px] leading-[1.3] font-semibold text-cover-ink">
+              <span className="ff-figures text-[24px] leading-[1.3] font-semibold text-cover-ink">
                 {option.amount}
               </span>
               <span className="mt-2 text-[14px] leading-none font-medium tracking-[-0.14px] text-cover-title">
@@ -222,7 +223,7 @@ export function CoverFollowUp({
 }
 
 /* -------------------------------------------------------------------------
-   5. Bank details (nodes 70:3340, 70:3421)
+   5. Bank details (node 76:6158)
    ------------------------------------------------------------------------- */
 
 export type BankForm = {
@@ -241,11 +242,9 @@ export function BankFollowUp({
 }) {
   return (
     <FollowUp labelledBy="bank-heading">
-      <FollowUpHeading
-        id="bank-heading"
-        title="Bank Details"
-        description="Tell us which account should receive refunds and claim payouts."
-      />
+      <h3 id="bank-heading" className="sr-only">
+        Update the account that receives refunds
+      </h3>
       <div className="flex flex-col gap-6">
         <div className="grid gap-6 sm:grid-cols-2">
           <TextField
@@ -279,7 +278,7 @@ export function BankFollowUp({
 }
 
 /* -------------------------------------------------------------------------
-   6. Choose a nominee (node 70:3448)
+   6. Choose a nominee (node 76:6205)
    ------------------------------------------------------------------------- */
 
 export function NomineeFollowUp({
@@ -298,9 +297,7 @@ export function NomineeFollowUp({
         {nomineeCandidates.map((candidate, index) => (
           <li
             key={candidate.id}
-            className={
-              index > 0 ? "mt-4 border-t border-grey-150 pt-4" : undefined
-            }
+            className={index > 0 ? "mt-4 border-t border-grey-150 pt-4" : undefined}
           >
             <div className="flex items-center justify-between gap-4">
               <p className="ff-figures text-[18px] leading-[1.4] font-semibold text-ink">
@@ -323,64 +320,249 @@ export function NomineeFollowUp({
 }
 
 /* -------------------------------------------------------------------------
-   7. Add more add-ons
-   The picker itself is not in a supplied frame; it reuses the selected-card
-   treatment from the cover options, with the add-ons listed in frame 63:2306.
+   7. Add-ons (nodes 76:6225, 76:6246)
    ------------------------------------------------------------------------- */
 
-export function AddOnsFollowUp({
-  selected,
-  onToggle,
+function CountBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="ff-case flex h-[15px] items-center rounded bg-badge-blue px-[3px] text-[10px] leading-[0.9] font-semibold tracking-[0.5px] text-white">
+      {children}
+    </span>
+  );
+}
+
+function HighlightNote({ highlight }: { highlight: Highlight }) {
+  return (
+    <span className="block w-fit max-w-full self-start rounded-md bg-green-100 p-2 text-[13px] leading-[1.4] tracking-[0.0325px] text-green-11">
+      {highlight.before}
+      {highlight.strong ? (
+        <span className="font-semibold">{highlight.strong}</span>
+      ) : null}
+      {highlight.after}
+    </span>
+  );
+}
+
+function Checkbox({ state }: { state: "locked" | "on" | "off" }) {
+  if (state === "off") {
+    return (
+      <span
+        aria-hidden="true"
+        className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border-[1.5px] border-grey-200 bg-white"
+      />
+    );
+  }
+
+  return (
+    <span
+      aria-hidden="true"
+      className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded p-0.5 text-white ${
+        state === "locked" ? "bg-ink" : "bg-success-solid-strong"
+      }`}
+    >
+      <CheckMarkIcon />
+    </span>
+  );
+}
+
+function PremiumColumn({
+  price,
+  was,
 }: {
-  selected: string[];
-  onToggle: (id: string) => void;
+  price: string;
+  was?: string;
 }) {
+  return (
+    <span className="ff-figures flex w-[78px] shrink-0 flex-col gap-1 text-right">
+      <span className="text-[12px] leading-none font-medium tracking-[0.18px] text-ink-muted">
+        Premium
+      </span>
+      <span
+        className={`text-[16px] leading-none font-medium tracking-[0.16px] ${
+          was ? "text-green-9" : "text-ink"
+        }`}
+      >
+        {price}
+      </span>
+      {was ? (
+        <span className="text-[12px] leading-none font-medium tracking-[0.18px] text-ink-muted line-through">
+          {was}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+export type AddOnState = {
+  selected: string[];
+  terms: Record<string, string>;
+};
+
+export function AddOnsFollowUp({
+  state,
+  onToggle,
+  onTermChange,
+}: {
+  state: AddOnState;
+  onToggle: (id: string) => void;
+  onTermChange: (id: string, term: string) => void;
+}) {
+  const [showOther, setShowOther] = useState(false);
+
   return (
     <FollowUp indent="card" labelledBy="add-ons-heading">
       <h3 id="add-ons-heading" className="sr-only">
-        Choose the add-ons you want
+        Add-ons on your policy
       </h3>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {optionalAddOns.map((addOn) => {
-          const isSelected = selected.includes(addOn.id);
 
-          return (
-            <label
-              key={addOn.id}
-              className={`relative flex cursor-pointer items-center justify-between gap-3 bg-white p-4 transition-colors ${
-                isSelected
-                  ? "rounded-[10px] border-[1.5px] border-tier-blue"
-                  : "rounded-xl border border-grey-150 shadow-card hover:border-grey-200"
-              }`}
+      <div className="rounded-xl border border-grey-150 bg-white p-5 shadow-card">
+        {/* Already on the policy */}
+        <h4 className="text-[13px] leading-none font-semibold tracking-[0.0325px] text-ink">
+          Previously Selected Add ons ({lockedAddOns.length})
+        </h4>
+        <ul className="mt-5 flex flex-col gap-5">
+          {lockedAddOns.map((addOn) => (
+            <li
+              key={addOn.name}
+              className="flex items-start justify-between gap-4"
             >
-              <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={() => onToggle(addOn.id)}
-                className="peer sr-only"
-              />
-              <span className="pointer-events-none absolute inset-0 rounded-xl peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary" />
-
-              <span className="flex min-w-0 items-center gap-2">
-                {isSelected ? (
-                  <CheckCircleIcon className="shrink-0 text-tier-blue" />
-                ) : (
-                  <span
-                    aria-hidden="true"
-                    className="size-4 shrink-0 rounded-full border-[1.5px] border-grey-200"
-                  />
-                )}
-                <span className="truncate text-[16px] leading-[1.15] font-medium text-ink">
+              <span className="flex min-w-0 items-start gap-3">
+                <Checkbox state="locked" />
+                <span className="flex items-center gap-1.5 text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
                   {addOn.name}
+                  <AttentionIcon className="shrink-0 text-ink-muted" />
                 </span>
               </span>
-
-              <span className="ff-figures shrink-0 text-[16px] leading-none font-semibold text-ink">
-                {addOn.priceLabel}
+              <span className="ff-figures w-[78px] shrink-0 text-right text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
+                {addOn.price}
               </span>
-            </label>
-          );
-        })}
+            </li>
+          ))}
+        </ul>
+
+        <hr className="my-6 border-grey-150" />
+
+        {/* Recommended */}
+        <div className="flex items-center gap-3">
+          <h4 className="text-[13px] leading-none font-semibold tracking-[0.0325px] text-ink">
+            Recommended Add ons
+          </h4>
+          <CountBadge>
+            {state.selected.length}/{recommendedAddOns.length}
+          </CountBadge>
+        </div>
+
+        <ul className="mt-5 flex flex-col gap-5">
+          {recommendedAddOns.map((addOn) => {
+            const isSelected = state.selected.includes(addOn.id);
+
+            return (
+              <li key={addOn.id} className="flex items-start justify-between gap-4">
+                <span className="flex min-w-0 flex-1 items-start gap-3">
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={isSelected}
+                    onClick={() => onToggle(addOn.id)}
+                    className="rounded"
+                  >
+                    <Checkbox state={isSelected ? "on" : "off"} />
+                    <span className="sr-only">{addOn.name}</span>
+                  </button>
+
+                  <span className="flex min-w-0 flex-1 flex-col gap-3">
+                    <span className="flex flex-col gap-2">
+                      <span className="text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
+                        {addOn.name}
+                      </span>
+                      <span className="max-w-[411px] text-[13px] leading-[1.5] text-ink-secondary">
+                        {addOn.description}
+                      </span>
+
+                      {addOn.terms ? (
+                        <span
+                          role="radiogroup"
+                          aria-label={`${addOn.name} term`}
+                          className="flex items-center gap-3"
+                        >
+                          {addOn.terms.map((term) => {
+                            const active =
+                              (state.terms[addOn.id] ?? addOn.terms?.[0]) === term;
+
+                            return (
+                              <label
+                                key={term}
+                                className="flex cursor-pointer items-center gap-2"
+                              >
+                                <input
+                                  type="radio"
+                                  name={`${addOn.id}-term`}
+                                  checked={active}
+                                  onChange={() => onTermChange(addOn.id, term)}
+                                  className="peer sr-only"
+                                />
+                                <span
+                                  className={`flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary ${
+                                    active
+                                      ? "border-focus bg-focus"
+                                      : "border-grey-200 bg-white"
+                                  }`}
+                                >
+                                  <span
+                                    className={`size-1.5 rounded-full ${active ? "bg-white" : "bg-transparent"}`}
+                                  />
+                                </span>
+                                <span className="text-[14px] leading-none font-medium text-ink">
+                                  {term}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </span>
+                      ) : null}
+                    </span>
+
+                    <HighlightNote highlight={addOn.highlight} />
+                  </span>
+                </span>
+
+                <PremiumColumn price={addOn.priceLabel} was={addOn.wasPriceLabel} />
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      {/* The rest of the catalogue */}
+      <div className="mt-4 rounded-xl border border-slate-6 bg-white shadow-card">
+        <button
+          type="button"
+          aria-expanded={showOther}
+          onClick={() => setShowOther((open) => !open)}
+          className="flex w-full items-center justify-between gap-4 p-[19px]"
+        >
+          <span className="flex items-center gap-2">
+            <span className="text-[14px] leading-none font-semibold tracking-[-0.035px] text-ink">
+              Other Add-ons
+            </span>
+            <CountBadge>0/{otherAddOnsCount}</CountBadge>
+          </span>
+          <ChevronDownIcon
+            className={`shrink-0 text-ink transition-transform ${showOther ? "rotate-180" : ""}`}
+          />
+        </button>
+        {showOther ? (
+          <p className="px-[19px] pb-[19px] text-[13px] leading-[1.5] text-ink-secondary">
+            {otherAddOnsCount} more add-ons are available on this plan. An
+            advisor can walk you through them,{" "}
+            <a
+              href="mailto:support@example.com"
+              className="font-semibold text-link underline-offset-4 hover:underline"
+            >
+              request a callback.
+            </a>
+          </p>
+        ) : null}
       </div>
     </FollowUp>
   );

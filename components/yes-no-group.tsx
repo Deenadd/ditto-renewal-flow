@@ -15,14 +15,12 @@ type Props = {
 };
 
 /**
- * radio pair (nodes 63:2399, 70:3219, 75:5355). Unselected is a 1.5px grey
- * ring; selected fills the ring and drops a white knob into it.
+ * radio pair (node 76:6011). Unselected is a 1.5px grey ring; selected fills
+ * the ring and drops a white knob into it.
  *
- * The earlier frame tinted a selected "No" with the error tokens, because back
- * then "No" was the answer that opened a follow-up. The questions have since
- * been reworded so "Yes" carries that meaning, and colouring "Yes, I want more
- * cover" as an error would read wrong, so both selected states use the neutral
- * ink fill.
+ * A selected "Yes" uses the success tokens, because "Yes" is the answer that
+ * opens a follow-up. Only that state is drawn, so a selected "No" falls back
+ * to the neutral ink fill.
  */
 export function YesNoGroup({ name, value, onChange, labelledBy }: Props) {
   return (
@@ -34,12 +32,18 @@ export function YesNoGroup({ name, value, onChange, labelledBy }: Props) {
       {options.map((option) => {
         const selected = value === option.value;
 
+        const isYes = option.value === "yes";
+
         const ring = selected
-          ? "border-ink bg-ink"
+          ? isYes
+            ? "border-success-solid-strong bg-success-solid-strong"
+            : "border-ink bg-ink"
           : "border-grey-200 bg-white group-hover:border-ink-secondary";
 
         const text = selected
-          ? "text-ink"
+          ? isYes
+            ? "text-success"
+            : "text-ink"
           : "text-ink-muted group-hover:text-ink-secondary";
 
         return (
