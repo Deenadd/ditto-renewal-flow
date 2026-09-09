@@ -18,9 +18,8 @@ type Props = {
  * radio pair (node 76:6011). Unselected is a 1.5px grey ring; selected fills
  * the ring and drops a white knob into it.
  *
- * A selected "Yes" uses the success tokens, because "Yes" is the answer that
- * opens a follow-up. Only that state is drawn, so a selected "No" falls back
- * to the neutral ink fill.
+ * The fill carries the answer: "Yes" opens a follow-up and uses the success
+ * tokens, "No" confirms nothing has changed and uses the error tokens.
  */
 export function YesNoGroup({ name, value, onChange, labelledBy }: Props) {
   return (
@@ -37,13 +36,13 @@ export function YesNoGroup({ name, value, onChange, labelledBy }: Props) {
         const ring = selected
           ? isYes
             ? "border-success-solid-strong bg-success-solid-strong"
-            : "border-ink bg-ink"
+            : "border-error bg-error"
           : "border-grey-200 bg-white group-hover:border-ink-secondary";
 
         const text = selected
           ? isYes
             ? "text-success"
-            : "text-ink"
+            : "text-error-text"
           : "text-ink-muted group-hover:text-ink-secondary";
 
         return (

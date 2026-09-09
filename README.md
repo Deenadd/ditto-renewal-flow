@@ -79,9 +79,9 @@ Spacing, type, colour and line breaks match. Decisions worth knowing:
 6. **Empty pin code.** The design draws the pin code field filled and focused.
    The build starts it empty, since the user has just said the address on file
    is wrong.
-7. **Selected answer colour.** A selected "Yes" uses the success tokens, as
-   drawn. Only that state is specified, so a selected "No" falls back to
-   neutral ink.
+7. **Selected answer colour.** The fill carries the answer. A selected "Yes"
+   uses the success tokens (#3F9256 fill, #3F9256 label) and a selected "No"
+   uses the error tokens (#F44B4F fill, #CF222E label).
 8. **Duplicate rows.** The sidebar lists "Cumulative Bonus Super" twice, and the
    add-ons card prices all three locked add-ons at ₹2,419. The build uses the
    three distinct names and the three distinct prices.
