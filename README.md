@@ -50,12 +50,14 @@ components/
   policy-summary.tsx   Deadline banner and premium breakdown
   follow-up.tsx        Shell and heading for a revealed follow-up
   follow-ups.tsx       The six follow-up blocks
+  calculating-premium.tsx  Full-page loading screen after Confirm & continue
   icons.tsx            Icons inlined from the Figma export
   ui/field.tsx         Text input and select
   ui/switch.tsx        Track-and-knob switch
 lib/
   renewal-data.ts      All copy and figures from the design
 public/brand/          Logo and insurer artwork exported from Figma
+public/loading/        Calculator animation for the loading screen
 ```
 
 ## Design fidelity
@@ -97,6 +99,14 @@ Spacing, type, colour and line breaks match. Three decisions worth knowing:
 
 "Clear all changes" appears in the footer as soon as any question is answered
 No, and resets every answer and follow-up back to the policy on file.
+
+## After Confirm & continue
+
+Confirming swaps the page for the "Calculating Premium" screen (node
+`72:3721`), holds it for a few seconds, then returns to the review with the
+result. The calculator is an animated WebP built from the Figma asset, cut from
+4 MB to 97 KB; a still frame is served to anyone who prefers reduced motion and
+to browsers without animated WebP.
 
 Behaviour added on top of the static frames: the Yes/No controls, chips,
 counters, cover picker, bank form and nominee switches are all interactive, and

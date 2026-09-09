@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CalculatingPremium } from "@/components/calculating-premium";
 import { Question } from "@/components/question";
 import { Chip } from "@/components/chip";
 import { ConditionsTable } from "@/components/conditions-table";
@@ -31,6 +32,11 @@ import {
 
 type Answers = Partial<Record<QuestionId, Answer>>;
 
+/** How long the premium calculation screen is held before the result shows. */
+const CALCULATING_MS = 3200;
+
+type Status = "review" | "calculating" | "done";
+
 const defaultMembers = coveredMembers.map((member) => member.id);
 const defaultHousehold: Household = {
   selected: householdOptions
@@ -50,7 +56,8 @@ export function RenewalReview() {
   const [cover, setCover] = useState<string | null>(null);
   const [bankForm, setBankForm] = useState<BankForm>({ ...bankFormDefaults });
   const [nominees, setNominees] = useState<string[]>(defaultNominees);
-  const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<Status>("review");
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const answeredCount = useMemo(
     () => questions.filter((question) => answers[question.id]).length,
@@ -62,6 +69,18 @@ export function RenewalReview() {
     () => questions.some((question) => answers[question.id] === "no"),
     [answers],
   );
+
+  /* Hold the calculating screen briefly, then show the result. */
+  useEffect(() => {
+    if (status !== "calculating") return;
+    const timer = window.setTimeout(() => setStatus("done"), CALCULATING_MS);
+    return () => window.clearTimeout(timer);
+  }, [status]);
+
+  useEffect(() => {
+    if (status !== "done") return;
+    resultRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [status]);
 
   function answer(id: QuestionId, value: Answer) {
     setAnswers((previous) => ({ ...previous, [id]: value }));
@@ -191,6 +210,10 @@ export function RenewalReview() {
     return null;
   }
 
+  if (status === "calculating") {
+    return <CalculatingPremium />;
+  }
+
   return (
     <main className="mx-auto max-w-[1112px] px-6 pt-10 pb-24 lg:pt-[82px] xl:px-0">
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-x-[63px]">
@@ -222,8 +245,9 @@ export function RenewalReview() {
           </ol>
 
           <div className="mt-6 border-t border-grey-150 pt-6">
-            {submitted ? (
+            {status === "done" ? (
               <div
+                ref={resultRef}
                 role="status"
                 className="flex flex-col gap-3 rounded-xl border border-grey-150 bg-grey-50 p-5 shadow-card sm:flex-row sm:items-center sm:justify-between"
               >
@@ -233,7 +257,7 @@ export function RenewalReview() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setSubmitted(false)}
+                  onClick={() => setStatus("review")}
                   className="shrink-0 self-start text-[15px] font-medium text-link underline-offset-4 hover:underline sm:self-auto"
                 >
                   Review answers
@@ -259,7 +283,7 @@ export function RenewalReview() {
                   type="button"
                   disabled={!complete}
                   aria-describedby="confirm-hint"
-                  onClick={() => setSubmitted(true)}
+                  onClick={() => setStatus("calculating")}
                   className={`ff-case flex h-10 min-w-[162px] items-center justify-center rounded-lg px-3 text-[15px] leading-[1.15] font-medium text-ink-inverted transition-colors ${
                     complete
                       ? "cursor-pointer bg-primary hover:bg-primary-hover"
