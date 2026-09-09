@@ -2,23 +2,54 @@
 
 import { useMemo, useState } from "react";
 import { Question } from "@/components/question";
-import { MemberTag } from "@/components/member-tag";
+import { Chip } from "@/components/chip";
 import { ConditionsTable } from "@/components/conditions-table";
 import { BankAccountCard, NomineeCard } from "@/components/detail-cards";
 import {
   PolicySummary,
   RenewalDeadlineBanner,
 } from "@/components/policy-summary";
+import {
+  BankFollowUp,
+  ConditionsFollowUp,
+  CoverFollowUp,
+  HouseholdFollowUp,
+  LocationFollowUp,
+  NomineeFollowUp,
+  type BankForm,
+  type Household,
+} from "@/components/follow-ups";
 import type { Answer } from "@/components/yes-no-group";
-import { coveredMembers, questions, type QuestionId } from "@/lib/renewal-data";
+import {
+  bankFormDefaults,
+  coveredMembers,
+  householdOptions,
+  nomineeCandidates,
+  questions,
+  type QuestionId,
+} from "@/lib/renewal-data";
 
 type Answers = Partial<Record<QuestionId, Answer>>;
 
+const defaultMembers = coveredMembers.map((member) => member.id);
+const defaultHousehold: Household = {
+  selected: householdOptions
+    .filter((option) => option.onPolicy)
+    .map((option) => option.id),
+  counts: { sons: 1, daughters: 1 },
+};
+const defaultNominees = nomineeCandidates
+  .filter((candidate) => candidate.current)
+  .map((candidate) => candidate.id);
+
 export function RenewalReview() {
   const [answers, setAnswers] = useState<Answers>({});
-  const [selectedMembers, setSelectedMembers] = useState<string[]>(() =>
-    coveredMembers.map((member) => member.id),
-  );
+  const [selectedMembers, setSelectedMembers] = useState<string[]>(defaultMembers);
+  const [pinCode, setPinCode] = useState("");
+  const [household, setHousehold] = useState<Household>(defaultHousehold);
+  const [cover, setCover] = useState<string | null>(null);
+  const [bankForm, setBankForm] = useState<BankForm>({ ...bankFormDefaults });
+  const [nominees, setNominees] = useState<string[]>(defaultNominees);
   const [submitted, setSubmitted] = useState(false);
 
   const answeredCount = useMemo(
@@ -27,6 +58,10 @@ export function RenewalReview() {
   );
   const remaining = questions.length - answeredCount;
   const complete = remaining === 0;
+  const hasChanges = useMemo(
+    () => questions.some((question) => answers[question.id] === "no"),
+    [answers],
+  );
 
   function answer(id: QuestionId, value: Answer) {
     setAnswers((previous) => ({ ...previous, [id]: value }));
@@ -40,33 +75,103 @@ export function RenewalReview() {
     );
   }
 
-  /** Extra content that hangs off a specific question in the design. */
+  function toggleHousehold(id: string) {
+    setHousehold((previous) => ({
+      ...previous,
+      selected: previous.selected.includes(id)
+        ? previous.selected.filter((member) => member !== id)
+        : [...previous.selected, id],
+    }));
+  }
+
+  function setHouseholdCount(id: string, next: number) {
+    setHousehold((previous) => ({
+      ...previous,
+      counts: { ...previous.counts, [id]: next },
+    }));
+  }
+
+  function toggleNominee(id: string) {
+    setNominees((previous) =>
+      previous.includes(id)
+        ? previous.filter((nominee) => nominee !== id)
+        : [...previous, id],
+    );
+  }
+
+  function clearAllChanges() {
+    setAnswers({});
+    setSelectedMembers(defaultMembers);
+    setPinCode("");
+    setHousehold(defaultHousehold);
+    setCover(null);
+    setBankForm({ ...bankFormDefaults });
+    setNominees(defaultNominees);
+  }
+
+  /**
+   * What hangs off each question. Some blocks are always on the page, others
+   * only open once the answer is "No".
+   */
   function attachment(id: QuestionId) {
+    const changed = answers[id] === "no";
+
+    if (id === "location") {
+      return changed ? (
+        <LocationFollowUp pinCode={pinCode} onPinCodeChange={setPinCode} />
+      ) : null;
+    }
+
     if (id === "members") {
       return (
-        <div className="mt-5 flex flex-wrap items-center gap-2 pl-[39px]">
-          {coveredMembers.map((member) => (
-            <MemberTag
-              key={member.id}
-              label={member.label}
-              selected={selectedMembers.includes(member.id)}
-              onToggle={() => toggleMember(member.id)}
+        <>
+          <div className="mt-5 flex flex-wrap items-center gap-2 pl-0 sm:pl-[39px]">
+            {coveredMembers.map((member) => (
+              <Chip
+                key={member.id}
+                label={member.label}
+                state={selectedMembers.includes(member.id) ? "on" : "off"}
+                onToggle={() => toggleMember(member.id)}
+              />
+            ))}
+          </div>
+          {changed ? (
+            <HouseholdFollowUp
+              household={household}
+              onToggle={toggleHousehold}
+              onCountChange={setHouseholdCount}
             />
-          ))}
-        </div>
+          ) : null}
+        </>
       );
     }
 
     if (id === "conditions") {
       return (
-        <div className="mt-4 sm:ml-[31px]">
-          <ConditionsTable />
-        </div>
+        <>
+          <div className="mt-4 sm:ml-[31px]">
+            <ConditionsTable />
+          </div>
+          {changed ? <ConditionsFollowUp /> : null}
+        </>
       );
     }
 
+    if (id === "cover") {
+      return changed ? (
+        <CoverFollowUp selected={cover} onSelect={setCover} />
+      ) : null;
+    }
+
     if (id === "refund-account") {
-      return (
+      return changed ? (
+        <BankFollowUp
+          form={bankForm}
+          onChange={(patch) =>
+            setBankForm((previous) => ({ ...previous, ...patch }))
+          }
+        />
+      ) : (
         <div className="mt-4 sm:ml-[31px]">
           <BankAccountCard />
         </div>
@@ -74,7 +179,9 @@ export function RenewalReview() {
     }
 
     if (id === "nominee") {
-      return (
+      return changed ? (
+        <NomineeFollowUp selected={nominees} onToggle={toggleNominee} />
+      ) : (
         <div className="mt-4 sm:ml-[31px]">
           <NomineeCard />
         </div>
@@ -133,12 +240,21 @@ export function RenewalReview() {
                 </button>
               </div>
             ) : (
-              <div className="flex justify-end">
+              <div className="flex items-center justify-end gap-3">
                 <p id="confirm-hint" className="sr-only">
                   {complete
                     ? "All questions answered. You can continue."
                     : `${remaining} of ${questions.length} questions still need an answer before you can continue.`}
                 </p>
+                {hasChanges ? (
+                  <button
+                    type="button"
+                    onClick={clearAllChanges}
+                    className="ff-case flex h-10 items-center justify-center rounded-lg border border-grey-200 bg-white px-3 text-[15px] leading-[1.15] font-medium text-ink shadow-card transition-colors hover:bg-grey-50"
+                  >
+                    Clear all changes
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   disabled={!complete}

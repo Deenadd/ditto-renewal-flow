@@ -131,3 +131,184 @@ export function VerifiedDiscountIcon({ className, size = 20 }: IconProps) {
     </svg>
   );
 }
+
+/* -------------------------------------------------------------------------
+   Icons introduced by the "No" variant of the frame (node 70:3126).
+   ------------------------------------------------------------------------- */
+
+/** marker-pin-01, 16x16, suffix inside the pin code input. */
+export function MarkerPinIcon({ className, size = 16 }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M13.3333 7.33333C13.3333 10.6402 10.2275 13.1706 8.75602 14.1838C8.52967 14.3397 8.4165 14.4176 8.23888 14.4613C8.10574 14.4941 7.89427 14.4941 7.76112 14.4613C7.5835 14.4176 7.47033 14.3397 7.24398 14.1838C5.77253 13.1706 2.66667 10.6402 2.66667 7.33333C2.66667 4.38781 5.05448 2 8 2C10.9455 2 13.3333 4.38781 13.3333 7.33333Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9.7323 7.33337C9.7323 8.2901 8.95672 9.06567 8 9.06567C7.04328 9.06567 6.2677 8.2901 6.2677 7.33337C6.2677 6.37665 7.04328 5.60107 8 5.60107C8.95672 5.60107 9.7323 6.37665 9.7323 7.33337Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** plus-02 drawn as a rule, 24x24, the decrement control on a counted tag. */
+export function MinusIcon({ className, size = 24 }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M6 12H12H18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** plus-02, 24x24, the increment control on a counted tag. */
+export function PlusIcon({ className, size = 24 }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M6 12H12M12 12H18M12 12V6M12 12V18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/** icon/chevron-down, 16x16, suffix inside a select. */
+export function ChevronDownIcon({ className, size = 16 }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M4 6L8 10L12 6"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** Cover tier marks, 24x24, one per cover option card. */
+export function CircleCheckIcon({ className, size = 24 }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M12 21.25C17.1086 21.25 21.25 17.1086 21.25 12C21.25 6.89137 17.1086 2.75 12 2.75C6.89137 2.75 2.75 6.89137 2.75 12C2.75 17.1086 6.89137 21.25 12 21.25Z"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7.75 12.9231L10.5625 15.75L15.25 8.75"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function ShieldCheckIcon({ className, size = 24 }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.25 11.5018L11 13.2518L14.75 9.50178M20.25 11.9142V6.9433C20.25 6.08244 19.6991 5.31816 18.8825 5.04594L12.9487 3.06801C12.3329 2.86275 11.6671 2.86275 11.0513 3.06801L5.11754 5.04594C4.30086 5.31816 3.75 6.08244 3.75 6.9433V11.9142C3.75 16.8866 8 19.2518 12 21.4097C16 19.2518 20.25 16.8866 20.25 11.9142Z"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function ShieldSparkIcon({ className, size = 24 }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M3.75 7.73509C3.75 6.53101 4.4699 5.4436 5.57835 4.97335L10.8284 2.74607C11.5772 2.42839 12.4228 2.42839 13.1716 2.74607L18.4216 4.97335C19.5301 5.4436 20.25 6.53101 20.25 7.73509V12.999C20.25 17.5553 16.5563 21.249 12 21.249C7.44365 21.249 3.75 17.5553 3.75 12.999V7.73509Z"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M13.2405 10.1383L12.5436 8.32647C12.4571 8.10155 12.241 7.95312 12 7.95312C11.759 7.95312 11.5429 8.10155 11.4564 8.32647L10.7595 10.1383C10.658 10.4024 10.4493 10.6111 10.1852 10.7126L8.37334 11.4095C8.14842 11.496 8 11.7121 8 11.9531C8 12.1941 8.14842 12.4102 8.37334 12.4967L10.1852 13.1936C10.4493 13.2951 10.658 13.5038 10.7595 13.7679L11.4564 15.5798C11.5429 15.8047 11.759 15.9531 12 15.9531C12.241 15.9531 12.4571 15.8047 12.5436 15.5798L13.2405 13.7679C13.342 13.5038 13.5507 13.2951 13.8148 13.1936L15.6267 12.4967C15.8516 12.4102 16 12.1941 16 11.9531C16 11.7121 15.8516 11.496 15.6267 11.4095L13.8148 10.7126C13.5507 10.6111 13.342 10.4024 13.2405 10.1383Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}

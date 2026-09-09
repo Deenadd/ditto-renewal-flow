@@ -40,6 +40,31 @@
   --color-primary-hover: #1a5e9e;
   --color-disabled: #d6d7d8;       /* primary/solid/disabled */
 
+
+  /* Answer states (from the "No" variant of the frame, node 70:3126) */
+  --color-error: #f44b4f;          /* error/default - selected "No" radio fill */
+  --color-error-text: #cf222e;     /* text/error-text - selected "No" label */
+
+  /* Form controls */
+  --color-focus: #389bf5;          /* secondary/border/focus */
+  --color-focus-ring: #bfe0ff;     /* scale/blue/blue-100 */
+  --color-icon-muted: #b9bbc6;     /* Slate/Light/8 - input and stepper icons */
+
+  /* Newly added household member */
+  --color-green-50: #fbfefc;       /* scale/green/green-50 */
+  --color-success-solid: #3f9256;  /* bg/success-solid */
+
+  /* Cover option cards */
+  --color-cover-ink: #0a111e;
+  --color-cover-title: #09132d;
+  --color-cover-body: #84888e;
+  --color-tier-blue: #2482f7;
+  --color-tier-blue-bg: #ecf4fb;
+  --color-tier-green: #08ab4a;
+  --color-tier-green-bg: #effaf4;
+  --color-tier-purple: #751ef7;
+  --color-tier-purple-bg: #f6f3fa;
+
   /* elevation/default.card */
   --shadow-card:
     0 2px 2px 0 rgb(30 37 75 / 0.01),
@@ -126,4 +151,20 @@
     transparent 4px,
     transparent 8px
   );
+}
+
+/* Follow-up blocks slide in when a question is answered "No". */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal {
+  animation: reveal 180ms ease-out;
 }

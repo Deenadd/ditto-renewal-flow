@@ -15,9 +15,9 @@ type Props = {
 };
 
 /**
- * radio pair (node 63:2399 and siblings). Native inputs keep arrow-key
- * navigation and screen-reader semantics; the visible control is drawn to the
- * Figma spec: 1.5px ring, 6px dot, 13px medium label.
+ * radio pair (nodes 63:2399 and 70:3219). Unselected is a 1.5px grey ring;
+ * selected fills the ring and drops a white knob into it. Choosing "No" uses
+ * the error tokens, because "No" is what opens the follow-up questions.
  */
 export function YesNoGroup({ name, value, onChange, labelledBy }: Props) {
   return (
@@ -28,6 +28,19 @@ export function YesNoGroup({ name, value, onChange, labelledBy }: Props) {
     >
       {options.map((option) => {
         const selected = value === option.value;
+        const isNo = option.value === "no";
+
+        const ring = selected
+          ? isNo
+            ? "border-error bg-error"
+            : "border-ink bg-ink"
+          : "border-grey-200 bg-white group-hover:border-ink-secondary";
+
+        const text = selected
+          ? isNo
+            ? "text-error-text"
+            : "text-ink"
+          : "text-ink-muted group-hover:text-ink-secondary";
 
         return (
           <label
@@ -43,22 +56,16 @@ export function YesNoGroup({ name, value, onChange, labelledBy }: Props) {
               className="peer sr-only"
             />
             <span
-              className={`flex size-[15px] shrink-0 items-center justify-center rounded-full border-[1.5px] bg-white transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary ${
-                selected
-                  ? "border-ink"
-                  : "border-grey-200 group-hover:border-ink-secondary"
-              }`}
+              className={`flex size-[15px] shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary ${ring}`}
             >
               <span
                 className={`size-1.5 rounded-full transition-colors ${
-                  selected ? "bg-ink" : "bg-transparent"
+                  selected ? "bg-white" : "bg-transparent"
                 }`}
               />
             </span>
             <span
-              className={`ff-case text-[13px] leading-[1.15] font-medium transition-colors ${
-                selected ? "text-ink" : "text-ink-muted group-hover:text-ink-secondary"
-              }`}
+              className={`ff-case text-[13px] leading-[1.15] font-medium transition-colors ${text}`}
             >
               {option.label}
             </span>
