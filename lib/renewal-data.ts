@@ -421,3 +421,57 @@ export const inflationOffer = {
 
 /** Footnote under the sidebar on the summary screen (node 78:6867). */
 export const digitalDiscountNote = "Total premium included 5% digital discount";
+
+/* ---------------------------------------------------------------------------
+   Anchor screen (node 79:7114), reached once the policy is bought.
+   --------------------------------------------------------------------------- */
+
+export const resumeBanner = {
+  title: "Resume anytime! We autosave your progress.",
+  description:
+    "Check your saved points on all screens. A link to the wizard has been sent to your phone to resume using your OTP.",
+};
+
+export type IssuanceStep = {
+  title: string;
+  description: string;
+  action?: { label: string; note: string };
+};
+
+export const issuanceSteps: IssuanceStep[] = [
+  {
+    title: "Complete your KYC",
+    description:
+      "As per IRDAI, Customer needs to completes KYC before buying a policy!",
+    action: { label: "Start", note: "Takes 5 mins" },
+  },
+  {
+    title: "Proposal form",
+    description: "Answer a set of questions to fill out your online application",
+  },
+  {
+    title: "Make payment",
+    description: "Make payment of your first premium",
+  },
+  {
+    title: "Policy issuance",
+    description:
+      "If everything checks out, You will receive a copy of the policy as soon as the insurer accepts the proposal.",
+  },
+];
+
+export const supportPanel = {
+  platform: {
+    title: "Issues with the platform",
+    description: "Please check reach out to us and we will help you out.",
+    email: "help@joinditto.in",
+  },
+  advisor: {
+    title: "What should you do if you're unsure?",
+    description:
+      "Rather than filling something which you are not sure about, talk to your advisor and ensure if you are not missing out on anything.",
+    label: "Contact us at:",
+    phone: "080 - 48816818",
+    email: "help@joinditto.in",
+  },
+};

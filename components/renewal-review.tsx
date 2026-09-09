@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CalculatingPremium } from "@/components/calculating-premium";
+import { AnchorScreen } from "@/components/anchor-screen";
 import { RenewalSummary, type SummaryLine } from "@/components/renewal-summary";
 import { Question } from "@/components/question";
 import { ConditionsTable } from "@/components/conditions-table";
@@ -38,7 +39,7 @@ type Answers = Partial<Record<QuestionId, Answer>>;
 /** How long the premium calculation screen is held before the result shows. */
 const CALCULATING_MS = 3200;
 
-type Status = "review" | "calculating" | "summary" | "purchased";
+type Status = "review" | "calculating" | "summary" | "anchor";
 
 const defaultMember: NewMember = {
   fullName: "",
@@ -295,33 +296,23 @@ export function RenewalReview() {
         }
         onChangeAnswer={reviewQuestion}
         onBack={() => setStatus("review")}
-        onBuy={() => setStatus("purchased")}
+        onBuy={() => setStatus("anchor")}
       />
     );
   }
 
-  if (status === "purchased") {
+  if (status === "anchor") {
     return (
-      <main className="mx-auto max-w-[1112px] px-6 pt-10 pb-24 lg:pt-[82px] xl:px-0">
-        <div
-          role="status"
-          className="flex max-w-[689px] flex-col gap-3 rounded-xl border border-grey-150 bg-grey-50 p-5 shadow-card"
-        >
-          <h1 className="text-[20px] leading-[1.3] font-semibold text-ink">
-            Your renewal is confirmed
-          </h1>
-          <p className="text-[16px] leading-[1.5] text-ink-secondary">
-            We&rsquo;ll email the policy document once the insurer issues it.
-          </p>
-          <button
-            type="button"
-            onClick={() => setStatus("summary")}
-            className="self-start text-[15px] font-medium text-link underline-offset-4 hover:underline"
-          >
-            Back to the summary
-          </button>
-        </div>
-      </main>
+      <AnchorScreen
+        selectedAddOns={addOns.selected}
+        addedMember={
+          answers.members === "yes" && member.relationship
+            ? member.relationship
+            : undefined
+        }
+        onBack={() => setStatus("summary")}
+        onStart={() => setStatus("summary")}
+      />
     );
   }
 

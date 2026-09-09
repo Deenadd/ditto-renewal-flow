@@ -49,6 +49,8 @@ components/
   follow-up.tsx        Shell and heading for a revealed follow-up
   follow-ups.tsx       The seven follow-up blocks
   calculating-premium.tsx  Full-page loading screen after Confirm & continue
+  renewal-summary.tsx  Change summary and policy periods
+  anchor-screen.tsx    What is left to do once the policy is bought
   icons.tsx            Icons inlined from the Figma export
   ui/field.tsx         Text input and select
   ui/switch.tsx        Track-and-knob switch
@@ -56,6 +58,7 @@ lib/
   renewal-data.ts      All copy and figures from the design
 public/brand/          Logo and insurer artwork exported from Figma
 public/loading/        Calculator animation for the loading screen
+public/anchor/         Banner and support artwork for the anchor screen
 ```
 
 ## Design fidelity
@@ -110,6 +113,10 @@ Spacing, type, colour and line breaks match. Decisions worth knowing:
 16. **Summary sidebar figures.** The frame re-ages the members and prices two
     add-ons differently from its own add-ons card. The build keeps one set of
     ages and prices throughout.
+17. **Anchor screen artwork.** The banner illustration and the support mascot
+    are cut from 2x node exports and keyed off their backgrounds, because both
+    are composed from overlapping rotated layers that clip outside their
+    frames.
 
 ## What "Yes" opens
 
@@ -140,13 +147,21 @@ One confirmation line per question, worded from the answer given. Lines the
 reviewer changed carry a blue plus and a Change link back to that question;
 the rest carry a green check.
 
-The lines land one at a time, about a third of a second apart, and the policy
-periods follow once the last one is in. Reduced motion collapses the stagger so
-the whole screen arrives at once.
+The lines land one at a time, a little under half a second apart, each
+resolving out of a blur as it settles. The policy periods follow once the last
+line is in. Reduced motion collapses the stagger so the whole screen arrives at
+once.
 
 Policy periods offer one, two and three year terms, with the two longer ones
 inside the "Save 18% on medical inflation" panel. "Go back" returns to the
-review; "Buy this policy" confirms.
+review; "Buy this policy" moves to the anchor screen.
+
+## The anchor screen
+
+"You're almost done!" (node `79:7114`) lists what is left before the policy
+issues: KYC, the proposal form, payment and issuance, with only the first step
+open. A blue banner explains that progress is autosaved, and the sidebar drops
+the deadline banner and the benefits card in favour of a support panel.
 
 The sidebar switches to its detailed variant here: the plan row with its Switch
 link, a green cover and premium because they were re-checked, an added member

@@ -94,6 +94,11 @@
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Registered here rather than as bare classes so Tailwind emits them as real
+     utilities and variants such as motion-safe: can compose with them. */
+  --animate-reveal: reveal 180ms ease-out;
+  --animate-reveal-blur: reveal-blur 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @layer base {
@@ -175,7 +180,7 @@
   );
 }
 
-/* Follow-up blocks slide in when a question is answered "No". */
+/* Follow-up blocks slide in when a question is answered "Yes". */
 @keyframes reveal {
   from {
     opacity: 0;
@@ -187,6 +192,21 @@
   }
 }
 
-.animate-reveal {
-  animation: reveal 180ms ease-out;
+/* Summary lines resolve out of a blur as each one lands. */
+@keyframes reveal-blur {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(6px) scale(0.99);
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
 }
+
+

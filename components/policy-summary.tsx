@@ -138,18 +138,29 @@ function BreakdownSection({
  * sections collapse and whose rows carry checkboxes.
  */
 export function PolicySummary({
-  detailed = false,
+  variant = "review",
   selectedAddOns = [],
   addedMember,
 }: {
-  detailed?: boolean;
+  /**
+   * "review"  the plain breakdown beside the questions
+   * "summary" plan row, green figures, collapsible sections with checkboxes
+   * "anchor"  plan row and green figures, no deadline banner, no benefits card,
+   *           and only the add-ons actually being bought
+   */
+  variant?: "review" | "summary" | "anchor";
   selectedAddOns?: string[];
   /** Relationship of a member added this session, shown as a success badge. */
   addedMember?: string;
 } = {}) {
+  const detailed = variant !== "review";
+  const collapsible = variant === "summary";
+
   return (
     <div className="flex flex-col gap-4">
-      <RenewalDeadlineBanner className="hidden lg:flex" />
+      {variant === "anchor" ? null : (
+        <RenewalDeadlineBanner className="hidden lg:flex" />
+      )}
 
       {/* Coverage details */}
       <div className="overflow-hidden rounded-2xl border border-grey-150 bg-white shadow-card">
@@ -265,7 +276,7 @@ export function PolicySummary({
 
             <hr className="border-grey-150" />
 
-            {detailed ? (
+            {collapsible ? (
               <BreakdownSection
                 title="Previously Selected Add-ons"
                 count={`${policy.previousAddOns.length}`}
@@ -291,7 +302,7 @@ export function PolicySummary({
               </section>
             )}
 
-            {detailed ? (
+            {collapsible ? (
               <>
                 <hr className="border-grey-150" />
                 <BreakdownSection
@@ -314,6 +325,35 @@ export function PolicySummary({
                   </p>
                   <p className="text-[14px] leading-none text-ink-muted">--</p>
                 </div>
+              </>
+            ) : null}
+
+            {variant === "anchor" && selectedAddOns.length > 0 ? (
+              <>
+                <hr className="border-grey-150" />
+                <section className="flex flex-col gap-4">
+                  <h4 className="text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
+                    Recommended Add-ons{" "}
+                    <span className="text-link">({selectedAddOns.length})</span>
+                  </h4>
+                  <dl className="flex flex-col gap-4">
+                    {recommendedAddOns
+                      .filter((addOn) => selectedAddOns.includes(addOn.id))
+                      .map((addOn) => (
+                        <div
+                          key={addOn.id}
+                          className="flex items-center justify-between gap-4"
+                        >
+                          <dt className="text-[14px] leading-none tracking-[-0.07px] text-ink-secondary">
+                            {addOn.name}
+                          </dt>
+                          <dd className="ff-figures text-right text-[14px] leading-none font-medium tracking-[-0.14px] text-success">
+                            {addOn.priceLabel}
+                          </dd>
+                        </div>
+                      ))}
+                  </dl>
+                </section>
               </>
             ) : null}
 

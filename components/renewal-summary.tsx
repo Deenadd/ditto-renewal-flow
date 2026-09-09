@@ -24,7 +24,7 @@ export type SummaryLine = {
 };
 
 /** How long between one summary line appearing and the next. */
-const STEP_MS = 380;
+const STEP_MS = 440;
 
 function PeriodCard({
   period,
@@ -163,7 +163,7 @@ export function RenewalSummary({
               <li
                 key={line.id}
                 hidden={revealed <= index}
-                className="motion-safe:animate-reveal border-b border-dashed border-grey-150 py-5 first:pt-0 last:border-solid"
+                className="motion-safe:animate-reveal-blur border-b border-dashed border-grey-150 py-5 first:pt-0 last:border-solid"
               >
                 <div className="flex items-center gap-[15px]">
                   {line.changed ? (
@@ -189,7 +189,7 @@ export function RenewalSummary({
           </ul>
 
           {/* Policy periods */}
-          <section hidden={!periodsVisible} className="motion-safe:animate-reveal mt-6">
+          <section hidden={!periodsVisible} className="motion-safe:animate-reveal-blur mt-6">
             <h2 className="text-[20px] leading-[1.3] font-semibold tracking-[-0.3px] text-ink">
               Choose your policy periods
             </h2>
@@ -253,7 +253,7 @@ export function RenewalSummary({
         <aside className="mt-12 lg:mt-0">
           <div className="lg:sticky lg:top-[88px]">
             <PolicySummary
-              detailed
+              variant="summary"
               selectedAddOns={selectedAddOns}
               addedMember={addedMember}
             />
