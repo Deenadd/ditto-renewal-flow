@@ -172,8 +172,10 @@ the deadline banner and the benefits card in favour of a support panel.
 ## Proposer KYC
 
 Start on the KYC step opens the CKYC lookup (nodes `121:7357`, `121:7520`,
-`121:7699`). Enter a PAN, date of birth and phone number, and "Fetch KYC
-details" reveals what the lookup returned. "Details don't match" clears it;
+`121:7699`). Fill the PAN, date of birth and phone number, and "Fetch KYC
+details" reveals what the lookup returned. The values are placeholders here, so
+the button only checks that the three fields are filled, not that they are well
+formed. "Details don't match" clears it;
 "Verify & Continue" opens the redirect notice for the insurer's gateway.
 
 The gateway dialog closes on Escape or on the backdrop. Continue would leave for

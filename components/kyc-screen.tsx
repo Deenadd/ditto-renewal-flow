@@ -256,10 +256,12 @@ export function KycScreen({
   const [fetched, setFetched] = useState(false);
   const [gateway, setGateway] = useState(false);
 
+  /* The values are placeholders in this prototype, so the button only checks
+     that the three fields have been filled in, not that they are well formed. */
   const ready =
-    form.pan.trim().length >= 10 &&
+    form.pan.trim().length > 0 &&
     form.dateOfBirth.length > 0 &&
-    form.phone.trim().length >= 10;
+    form.phone.trim().length > 0;
 
   return (
     <>
