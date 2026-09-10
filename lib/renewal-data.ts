@@ -440,7 +440,8 @@ export const resumeBanner = {
 export type IssuanceStep = {
   title: string;
   description: string;
-  action?: { label: string; note: string };
+  /** Shown only while this is the step in play. */
+  action?: { label: string; note?: string };
 };
 
 export const issuanceSteps: IssuanceStep[] = [
@@ -453,10 +454,12 @@ export const issuanceSteps: IssuanceStep[] = [
   {
     title: "Proposal form",
     description: "Answer a set of questions to fill out your online application",
+    action: { label: "Start", note: "Takes 5 mins" },
   },
   {
     title: "Make payment",
     description: "Make payment of your first premium",
+    action: { label: "Continue" },
   },
   {
     title: "Policy issuance",

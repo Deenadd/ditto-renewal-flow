@@ -52,6 +52,10 @@ components/
   renewal-summary.tsx  Change summary and policy periods
   anchor-screen.tsx    What is left to do once the policy is bought
   kyc-screen.tsx       Proposer KYC lookup and the gateway redirect
+  proposal-form.tsx    Address, medical history and lifestyle
+  proposal-summary.tsx Read-back of the proposal with declarations
+  policy-bar.tsx       Collapsed policy summary under the nav
+  support-panel.tsx    Help card carried down the journey
   icons.tsx            Icons inlined from the Figma export
   ui/field.tsx         Text input and select
   ui/switch.tsx        Track-and-knob switch
@@ -119,6 +123,17 @@ Spacing, type, colour and line breaks match. Decisions worth knowing:
     are cut from 2x node exports and keyed off their backgrounds, because both
     are composed from overlapping rotated layers that clip outside their
     frames.
+18. **Proposal form members.** The frames run the form over one person, "Uma
+    Kumari", with a 2024 date of birth for a mother. The build runs it over the
+    people already on this policy, with dates and measurements that match the
+    ages used elsewhere.
+19. **Address character limit.** The frame caps address lines at 30 characters,
+    which will not hold the address it displays. The build uses 60.
+20. **Summary detail labels.** The frame labels the read-back with "Test date /
+    Test type / Test findings" while the form collects diagnosis and treatment.
+    The build reads back the labels the form actually asked for.
+21. **Payment step policy name.** The frame's policy bar reads "Care Supreme"
+    on that one screen. The build keeps "Optima Secure" throughout.
 
 ## What "Yes" opens
 
@@ -184,6 +199,25 @@ sends the proposer to the insurer's own gateway to finish KYC there.
 The gateway dialog closes on Escape or on the backdrop. Continue would leave for
 `hdfcergoinsurance.kycgateway.com`, which is outside the prototype, so it
 returns to the anchor screen instead.
+
+## Proposal form
+
+Finishing KYC ticks that step and hands the anchor screen to the proposal
+(nodes `122:8241`, `122:8373`, `122:8914`, `122:9096`). The anchor screen is one
+component driven by how far the journey has got: earlier steps carry a green
+check, the step in play carries its own button, and the sidebar panel changes
+with it, from the KYC steps to the proposal steps to the payment modes.
+
+The form itself runs communication address, two medical history sections and
+lifestyle. Each member gets an accordion with a live count of what is still
+unanswered. In Medical History 2 a "Yes" opens six fields for the diagnosis and
+treatment. The sidebar tracker follows whichever section is on screen.
+
+"Confirm and submit" opens the summary, which spans the full width with no
+sidebar, as drawn. Each card can be collapsed or sent back to the form with
+Edit, and "Confirm and Submit" stays disabled until the declarations are
+ticked. Submitting ticks the proposal step and returns to the anchor screen
+with payment in play.
 
 The sidebar switches to its detailed variant here: the plan row with its Switch
 link, an added member shown as a green badge, and a premium breakdown whose

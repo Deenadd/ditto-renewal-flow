@@ -4,6 +4,12 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CalculatingPremium } from "@/components/calculating-premium";
 import { AnchorScreen } from "@/components/anchor-screen";
 import { KycScreen } from "@/components/kyc-screen";
+import {
+  ProposalFormScreen,
+  emptyProposal,
+  type ProposalState,
+} from "@/components/proposal-form";
+import { ProposalSummaryScreen } from "@/components/proposal-summary";
 import { RenewalSummary, type SummaryLine } from "@/components/renewal-summary";
 import { Question } from "@/components/question";
 import { ConditionsTable } from "@/components/conditions-table";
@@ -40,7 +46,14 @@ type Answers = Partial<Record<QuestionId, Answer>>;
 /** How long the premium calculation screen is held before the result shows. */
 const CALCULATING_MS = 3200;
 
-type Status = "review" | "calculating" | "summary" | "anchor" | "kyc";
+type Status =
+  | "review"
+  | "calculating"
+  | "summary"
+  | "anchor"
+  | "kyc"
+  | "proposal"
+  | "proposal-summary";
 
 const defaultMember: NewMember = {
   fullName: "",
@@ -68,6 +81,9 @@ export function RenewalReview() {
   const [nominees, setNominees] = useState<string[]>(defaultNominees);
   const [addOns, setAddOns] = useState<AddOnState>(defaultAddOns);
   const [status, setStatus] = useState<Status>("review");
+  /** How far the issuance journey has got: 1 KYC, 2 proposal, 3 payment. */
+  const [journeyStep, setJourneyStep] = useState(1);
+  const [proposal, setProposal] = useState<ProposalState>(emptyProposal);
 
   const answeredCount = useMemo(
     () => questions.filter((question) => answers[question.id]).length,
@@ -336,7 +352,36 @@ export function RenewalReview() {
     return (
       <KycScreen
         onBack={() => setStatus("anchor")}
-        onDone={() => setStatus("anchor")}
+        onDone={() => {
+          setJourneyStep((current) => Math.max(current, 2));
+          setStatus("anchor");
+        }}
+      />
+    );
+  }
+
+  if (status === "proposal") {
+    return (
+      <ProposalFormScreen
+        value={proposal}
+        onChange={setProposal}
+        onBack={() => setStatus("anchor")}
+        onClear={() => setProposal(emptyProposal)}
+        onSubmit={() => setStatus("proposal-summary")}
+      />
+    );
+  }
+
+  if (status === "proposal-summary") {
+    return (
+      <ProposalSummaryScreen
+        value={proposal}
+        onBack={() => setStatus("proposal")}
+        onEdit={() => setStatus("proposal")}
+        onSubmit={() => {
+          setJourneyStep((current) => Math.max(current, 3));
+          setStatus("anchor");
+        }}
       />
     );
   }
@@ -344,6 +389,7 @@ export function RenewalReview() {
   if (status === "anchor") {
     return (
       <AnchorScreen
+        step={journeyStep}
         pinCode={pinCodeLabel}
         cover={coverLabel}
         selectedAddOns={addOns.selected}
@@ -353,7 +399,9 @@ export function RenewalReview() {
             : undefined
         }
         onBack={() => setStatus("summary")}
-        onStart={() => setStatus("kyc")}
+        onStart={() =>
+          setStatus(journeyStep === 1 ? "kyc" : "proposal")
+        }
       />
     );
   }
