@@ -40,7 +40,7 @@ app/
   layout.tsx           Font wiring and document metadata
   page.tsx             Composes the header and the review screen
 components/
-  site-header.tsx      Nav bar with brand mark and support link
+  site-header.tsx      Nav bar; the brand mark steps back through the journey
   renewal-review.tsx   Client component holding all answer state
   question.tsx         One numbered question row
   yes-no-group.tsx     Accessible Yes/No radio pair
@@ -259,6 +259,13 @@ Behaviour added on top of the static frames: the Yes/No controls, member form,
 cover picker, bank form, nominee switches, add-on checkboxes and term radios are
 all interactive, and "Confirm & continue" stays disabled until all seven
 questions are answered.
+
+## Getting back
+
+The brand mark in the nav steps back one screen. The journey keeps a stack of
+where it has been, so it works from any point and from the redirect dialogs.
+On the first screen there is nowhere to go, so the mark renders as plain
+artwork rather than a button.
 
 ## Accessibility
 

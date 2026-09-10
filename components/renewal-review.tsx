@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CalculatingPremium } from "@/components/calculating-premium";
+import { SiteHeader } from "@/components/site-header";
 import { AnchorScreen } from "@/components/anchor-screen";
 import { GatewayDialog } from "@/components/gateway-dialog";
 import { KycScreen } from "@/components/kyc-screen";
@@ -90,6 +91,8 @@ export function RenewalReview() {
   const [nominees, setNominees] = useState<string[]>(defaultNominees);
   const [addOns, setAddOns] = useState<AddOnState>(defaultAddOns);
   const [status, setStatus] = useState<Status>("review");
+  /** Where the brand mark takes you back to, newest last. */
+  const [history, setHistory] = useState<Status[]>([]);
   /** Which issuance step is in play. */
   const [journeyStep, setJourneyStep] = useState<IssuanceStepId>("kyc");
   /** v2 runs the proposal one step at a time. */
@@ -107,10 +110,24 @@ export function RenewalReview() {
     [answers],
   );
 
+  function goTo(next: Status) {
+    setHistory((previous) => [...previous, status]);
+    setStatus(next);
+  }
+
+  function goBack() {
+    if (history.length === 0) return;
+    setStatus(history[history.length - 1]);
+    setHistory(history.slice(0, -1));
+  }
+
   /* Hold the calculating screen briefly, then show the result. */
   useEffect(() => {
     if (status !== "calculating") return;
-    const timer = window.setTimeout(() => setStatus("summary"), CALCULATING_MS);
+    const timer = window.setTimeout(() => {
+      setHistory((previous) => [...previous, "calculating"]);
+      setStatus("summary");
+    }, CALCULATING_MS);
     return () => window.clearTimeout(timer);
   }, [status]);
 
@@ -378,179 +395,189 @@ export function RenewalReview() {
     return changed ? followUp(id, "review") : null;
   }
 
-  if (status === "calculating") {
-    return <CalculatingPremium />;
-  }
+  /** The screen for the state the journey is in. */
+  function screen() {
+    if (status === "calculating") {
+      return <CalculatingPremium />;
+    }
 
-  if (status === "summary") {
-    return (
-      <RenewalSummary
-        lines={summaryLines}
-        editors={summaryEditors}
-        pinCode={pinCodeLabel}
-        cover={coverLabel}
-        selectedAddOns={addOns.selected}
-        addedMember={
-          answers.members === "yes" && member.relationship
-            ? member.relationship
-            : undefined
-        }
-        onBack={() => setStatus("review")}
-        onBuy={() => {
-          setJourneyStep(hasChanges ? "kyc" : "payment");
-          setStatus("anchor");
-        }}
-      />
-    );
-  }
-
-  if (status === "kyc") {
-    return (
-      <KycScreen
-        onBack={() => setStatus("anchor")}
-        onDone={() => {
-          setJourneyStep(proposalSteps.length > 0 ? "proposal" : "payment");
-          setStatus("anchor");
-        }}
-      />
-    );
-  }
-
-  if (status === "proposal") {
-    return (
-      <ProposalFormScreen
-        value={proposal}
-        onChange={setProposal}
-        steps={proposalSteps}
-        members={proposalMembers}
-        stepped={steppedForm}
-        onToggleStepped={() => setSteppedForm((on) => !on)}
-        onBack={() => setStatus("anchor")}
-        onClear={() => setProposal(emptyProposal)}
-        onSubmit={() => setStatus("proposal-summary")}
-      />
-    );
-  }
-
-  if (status === "proposal-summary") {
-    return (
-      <ProposalSummaryScreen
-        value={proposal}
-        members={proposalMembers}
-        onBack={() => setStatus("proposal")}
-        onEdit={() => setStatus("proposal")}
-        onSubmit={() => {
-          setJourneyStep("payment");
-          setStatus("anchor");
-        }}
-      />
-    );
-  }
-
-  if (status === "anchor" || status === "payment-gateway") {
-    return (
-      <>
-      <AnchorScreen
-        steps={journeySteps}
-        current={journeyStep}
-        pinCode={pinCodeLabel}
-        cover={coverLabel}
-        selectedAddOns={addOns.selected}
-        addedMember={
-          answers.members === "yes" && member.relationship
-            ? member.relationship
-            : undefined
-        }
-        onBack={() => setStatus("summary")}
-        onStart={() => {
-          if (journeyStep === "kyc") setStatus("kyc");
-          else if (journeyStep === "proposal") setStatus("proposal");
-          else setStatus("payment-gateway");
-        }}
-      />
-      {status === "payment-gateway" ? (
-        <GatewayDialog
-          onClose={() => setStatus("anchor")}
-          onContinue={() => setStatus("anchor")}
+    if (status === "summary") {
+      return (
+        <RenewalSummary
+          lines={summaryLines}
+          editors={summaryEditors}
+          pinCode={pinCodeLabel}
+          cover={coverLabel}
+          selectedAddOns={addOns.selected}
+          addedMember={
+            answers.members === "yes" && member.relationship
+              ? member.relationship
+              : undefined
+          }
+          onBack={goBack}
+          onBuy={() => {
+            setJourneyStep(hasChanges ? "kyc" : "payment");
+            goTo("anchor");
+          }}
         />
-      ) : null}
-      </>
+      );
+    }
+
+    if (status === "kyc") {
+      return (
+        <KycScreen
+          onBack={goBack}
+          onDone={() => {
+            setJourneyStep(proposalSteps.length > 0 ? "proposal" : "payment");
+            goTo("anchor");
+          }}
+        />
+      );
+    }
+
+    if (status === "proposal") {
+      return (
+        <ProposalFormScreen
+          value={proposal}
+          onChange={setProposal}
+          steps={proposalSteps}
+          members={proposalMembers}
+          stepped={steppedForm}
+          onToggleStepped={() => setSteppedForm((on) => !on)}
+          onBack={goBack}
+          onClear={() => setProposal(emptyProposal)}
+          onSubmit={() => goTo("proposal-summary")}
+        />
+      );
+    }
+
+    if (status === "proposal-summary") {
+      return (
+        <ProposalSummaryScreen
+          value={proposal}
+          members={proposalMembers}
+          onBack={goBack}
+          onEdit={() => goTo("proposal")}
+          onSubmit={() => {
+            setJourneyStep("payment");
+            goTo("anchor");
+          }}
+        />
+      );
+    }
+
+    if (status === "anchor" || status === "payment-gateway") {
+      return (
+        <>
+        <AnchorScreen
+          steps={journeySteps}
+          current={journeyStep}
+          pinCode={pinCodeLabel}
+          cover={coverLabel}
+          selectedAddOns={addOns.selected}
+          addedMember={
+            answers.members === "yes" && member.relationship
+              ? member.relationship
+              : undefined
+          }
+          onBack={goBack}
+          onStart={() => {
+            if (journeyStep === "kyc") goTo("kyc");
+            else if (journeyStep === "proposal") goTo("proposal");
+            else goTo("payment-gateway");
+          }}
+        />
+        {status === "payment-gateway" ? (
+          <GatewayDialog
+            onClose={goBack}
+            onContinue={goBack}
+          />
+        ) : null}
+        </>
+      );
+    }
+
+    return (
+      <main className="mx-auto max-w-[1112px] px-6 pt-10 pb-24 lg:pt-[82px] xl:px-0">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-x-[63px]">
+          <div className="min-w-0">
+            <RenewalDeadlineBanner className="mb-8 lg:hidden" />
+
+            <h1 className="text-[32px] leading-[1.2] font-semibold text-ink">
+              Quick answers before renewals
+            </h1>
+            <p className="mt-3 max-w-[583px] text-[16px] leading-[1.5] text-ink-secondary">
+              Premiums shift by city. If you&rsquo;ve moved, we&rsquo;ll re-check
+              the price before you renew sometimes it drops.
+            </p>
+
+            <ol className="question-list mt-8">
+              {questions.map((question, index) => (
+                <Question
+                  key={question.id}
+                  id={question.id}
+                  index={index + 1}
+                  title={question.title}
+                  description={question.description}
+                  value={answers[question.id] ?? null}
+                  onChange={(value) => answer(question.id, value)}
+                >
+                  {attachment(question.id)}
+                </Question>
+              ))}
+            </ol>
+
+            <div className="mt-6 border-t border-grey-150 pt-6">
+                <div className="flex items-center justify-end gap-3">
+                  <p id="confirm-hint" className="sr-only">
+                    {complete
+                      ? "All questions answered. You can continue."
+                      : `${remaining} of ${questions.length} questions still need an answer before you can continue.`}
+                  </p>
+                  {hasChanges ? (
+                    <button
+                      type="button"
+                      onClick={clearAllChanges}
+                      className="ff-case flex h-10 items-center justify-center rounded-lg border border-grey-200 bg-white px-3 text-[15px] leading-[1.15] font-medium text-ink shadow-card transition-colors hover:bg-grey-50"
+                    >
+                      Clear all changes
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled={!complete}
+                    aria-describedby="confirm-hint"
+                    onClick={() => goTo("calculating")}
+                    className={`ff-case flex h-10 min-w-[162px] items-center justify-center rounded-lg px-3 text-[15px] leading-[1.15] font-medium text-ink-inverted transition-colors ${
+                      complete
+                        ? "cursor-pointer bg-primary hover:bg-primary-hover"
+                        : "cursor-not-allowed bg-disabled"
+                    }`}
+                  >
+                    Confirm &amp; continue
+                  </button>
+                </div>
+            </div>
+
+            <p aria-live="polite" className="sr-only">
+              {answeredCount} of {questions.length} questions answered.
+            </p>
+          </div>
+
+          <aside className="mt-12 lg:mt-0">
+            <div className="lg:sticky lg:top-[88px]">
+              <PolicySummary />
+            </div>
+          </aside>
+        </div>
+      </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-[1112px] px-6 pt-10 pb-24 lg:pt-[82px] xl:px-0">
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-x-[63px]">
-        <div className="min-w-0">
-          <RenewalDeadlineBanner className="mb-8 lg:hidden" />
-
-          <h1 className="text-[32px] leading-[1.2] font-semibold text-ink">
-            Quick answers before renewals
-          </h1>
-          <p className="mt-3 max-w-[583px] text-[16px] leading-[1.5] text-ink-secondary">
-            Premiums shift by city. If you&rsquo;ve moved, we&rsquo;ll re-check
-            the price before you renew sometimes it drops.
-          </p>
-
-          <ol className="question-list mt-8">
-            {questions.map((question, index) => (
-              <Question
-                key={question.id}
-                id={question.id}
-                index={index + 1}
-                title={question.title}
-                description={question.description}
-                value={answers[question.id] ?? null}
-                onChange={(value) => answer(question.id, value)}
-              >
-                {attachment(question.id)}
-              </Question>
-            ))}
-          </ol>
-
-          <div className="mt-6 border-t border-grey-150 pt-6">
-              <div className="flex items-center justify-end gap-3">
-                <p id="confirm-hint" className="sr-only">
-                  {complete
-                    ? "All questions answered. You can continue."
-                    : `${remaining} of ${questions.length} questions still need an answer before you can continue.`}
-                </p>
-                {hasChanges ? (
-                  <button
-                    type="button"
-                    onClick={clearAllChanges}
-                    className="ff-case flex h-10 items-center justify-center rounded-lg border border-grey-200 bg-white px-3 text-[15px] leading-[1.15] font-medium text-ink shadow-card transition-colors hover:bg-grey-50"
-                  >
-                    Clear all changes
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  disabled={!complete}
-                  aria-describedby="confirm-hint"
-                  onClick={() => setStatus("calculating")}
-                  className={`ff-case flex h-10 min-w-[162px] items-center justify-center rounded-lg px-3 text-[15px] leading-[1.15] font-medium text-ink-inverted transition-colors ${
-                    complete
-                      ? "cursor-pointer bg-primary hover:bg-primary-hover"
-                      : "cursor-not-allowed bg-disabled"
-                  }`}
-                >
-                  Confirm &amp; continue
-                </button>
-              </div>
-          </div>
-
-          <p aria-live="polite" className="sr-only">
-            {answeredCount} of {questions.length} questions answered.
-          </p>
-        </div>
-
-        <aside className="mt-12 lg:mt-0">
-          <div className="lg:sticky lg:top-[88px]">
-            <PolicySummary />
-          </div>
-        </aside>
-      </div>
-    </main>
+    <>
+      <SiteHeader onBack={history.length > 0 ? goBack : undefined} />
+      {screen()}
+    </>
   );
 }

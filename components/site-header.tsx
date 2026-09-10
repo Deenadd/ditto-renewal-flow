@@ -1,25 +1,42 @@
+"use client";
+
 import Image from "next/image";
-import Link from "next/link";
 import { LifeBuoyIcon } from "@/components/icons";
 
 /**
  * Nav-Bar (node 63:2307). 64px tall, hairline bottom rule in Slate/Light/4,
  * brand mark and support action aligned to the page content gutters.
+ *
+ * The brand mark steps back through the journey when there is somewhere to go,
+ * and is inert on the first screen.
  */
-export function SiteHeader() {
+export function SiteHeader({ onBack }: { onBack?: () => void }) {
+  const logo = (
+    <Image
+      src="/brand/ditto-logo.png"
+      alt="Ditto"
+      width={663}
+      height={307}
+      priority
+      className="h-9 w-[77.4px] object-contain"
+    />
+  );
+
   return (
     <header className="sticky top-0 z-30 h-16 border-b border-slate-4 bg-white">
       <div className="mx-auto flex h-full max-w-[1112px] items-center justify-between px-6 xl:px-0">
-        <Link href="/" className="flex items-center" aria-label="Ditto home">
-          <Image
-            src="/brand/ditto-logo.png"
-            alt="Ditto"
-            width={663}
-            height={307}
-            priority
-            className="h-9 w-[77.4px] object-contain"
-          />
-        </Link>
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Go back a step"
+            className="flex items-center rounded"
+          >
+            {logo}
+          </button>
+        ) : (
+          <span className="flex items-center">{logo}</span>
+        )}
 
         <a
           href="mailto:support@example.com"
