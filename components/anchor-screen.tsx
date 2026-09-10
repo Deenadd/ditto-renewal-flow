@@ -5,9 +5,10 @@ import { SupportPanel } from "@/components/support-panel";
 import { PolicySummary } from "@/components/policy-summary";
 import { ArrowLeftIcon, SummaryCheckIcon } from "@/components/icons";
 import {
-  issuanceSteps,
+  issuanceStepById,
   resumeBanner,
   type IssuanceStep,
+  type IssuanceStepId,
 } from "@/lib/renewal-data";
 import { stepPanels } from "@/lib/proposal-data";
 
@@ -35,7 +36,7 @@ function StepBadge({
 }
 
 /** The panel that changes with the step in play (nodes 122:8241, 122:9096). */
-function StepPanelCard({ step }: { step: number }) {
+function StepPanelCard({ step }: { step: IssuanceStepId }) {
   const panel = stepPanels[step];
   if (!panel) return null;
 
@@ -158,7 +159,8 @@ function Step({
  * with the steps laid out and only the first one open.
  */
 export function AnchorScreen({
-  step = 1,
+  steps,
+  current,
   selectedAddOns,
   addedMember,
   pinCode,
@@ -166,8 +168,10 @@ export function AnchorScreen({
   onBack,
   onStart,
 }: {
-  /** Which of the four steps is in play; everything before it is done. */
-  step?: number;
+  /** The steps this journey needs, in order. */
+  steps: IssuanceStepId[];
+  /** The one in play; everything before it is done. */
+  current: IssuanceStepId;
   selectedAddOns: string[];
   addedMember?: string;
   pinCode?: string;
@@ -175,9 +179,11 @@ export function AnchorScreen({
   onBack: () => void;
   onStart: () => void;
 }) {
+  const position = Math.max(0, steps.indexOf(current));
+
   return (
     <>
-      {step > 1 ? (
+      {position > 0 ? (
         <div className="mx-auto max-w-[1112px] px-6 xl:px-0">
           <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-x-[63px]">
             <div />
@@ -207,7 +213,7 @@ export function AnchorScreen({
             Before you get your policy, we will need to wrap up a few things
           </p>
 
-          {step < 3 ? (
+          {current !== "payment" || steps.length <= 2 ? (
           <div className="mt-5 flex items-center justify-between gap-4 overflow-hidden rounded-xl bg-blue-light p-4">
             <div className="flex w-[400px] max-w-full shrink-0 flex-col gap-2">
               <p className="ff-figures text-[18px] leading-[1.4] font-semibold text-ink">
@@ -229,15 +235,15 @@ export function AnchorScreen({
           ) : null}
 
           <ol className="mt-6 flex max-w-[513px] flex-col gap-5">
-            {issuanceSteps.map((item, index) => (
+            {steps.map((id, index) => (
               <Step
-                key={item.title}
-                step={item}
+                key={id}
+                step={issuanceStepById[id]}
                 index={index + 1}
                 state={
-                  index + 1 < step
+                  index < position
                     ? "done"
-                    : index + 1 === step
+                    : index === position
                       ? "active"
                       : "waiting"
                 }
@@ -249,8 +255,8 @@ export function AnchorScreen({
 
         <aside className="mt-12 lg:mt-0">
           <div className="flex flex-col gap-5 lg:sticky lg:top-[88px]">
-            <StepPanelCard step={step} />
-            {step === 1 ? (
+            <StepPanelCard step={current} />
+            {current === "kyc" ? (
               <PolicySummary
                 variant="anchor"
                 selectedAddOns={selectedAddOns}

@@ -56,7 +56,7 @@ export function Question({
         />
       </div>
 
-      <p className="mt-2 max-w-[546px] pl-[39px] text-[16px] leading-[1.5] text-ink-secondary">
+      <p className="mt-2 max-w-[546px] pl-[39px] text-[16px] leading-[1.5] whitespace-pre-line text-ink-secondary">
         {description}
       </p>
 

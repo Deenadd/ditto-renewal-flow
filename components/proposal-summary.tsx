@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowLeftIcon, CheckMarkIcon, ChevronDownIcon } from "@/components/icons";
 import type { ProposalState, TreatmentDetail } from "@/components/proposal-form";
+import type { ProposalMember } from "@/components/proposal-form";
 import {
   declarations,
   insuredMembers,
@@ -120,22 +121,23 @@ function AnswerRow({
 
 export function ProposalSummaryScreen({
   value,
+  members,
   onBack,
   onEdit,
   onSubmit,
 }: {
   value: ProposalState;
+  /** Who the health questions were asked about. */
+  members: ProposalMember[];
   onBack: () => void;
   onEdit: () => void;
   onSubmit: () => void;
 }) {
   const [agreed, setAgreed] = useState(false);
-  const [openMember, setOpenMember] = useState<Record<string, boolean>>({
-    [insuredMembers[0].id]: true,
-  });
+  const [openMember, setOpenMember] = useState<Record<string, boolean>>({});
 
   const savedUpTo =
-    value.lifestyle.smoking || value.lifestyle.alcohol || value.lifestyle.otherDrugs
+    Object.keys(value.lifestyle).length > 0
       ? "Lifestyle"
       : Object.keys(value.additional).length > 0
         ? "Medical History 2"
@@ -223,7 +225,7 @@ export function ProposalSummaryScreen({
                 </div>
               </Card>
 
-              {insuredMembers.map((member) => {
+              {members.map((member) => {
                 const basic = value.basic[member.id] ?? {};
                 const additional = value.additional[member.id] ?? {};
                 const details = value.details[member.id] ?? {};
@@ -231,7 +233,7 @@ export function ProposalSummaryScreen({
                   Object.keys(basic).length + Object.keys(additional).length;
                 if (answered === 0) return null;
 
-                const open = openMember[member.id] ?? false;
+                const open = openMember[member.id] ?? true;
 
                 return (
                   <div
@@ -308,45 +310,62 @@ export function ProposalSummaryScreen({
                 );
               })}
 
-              {value.lifestyle.smoking ||
-              value.lifestyle.alcohol ||
-              value.lifestyle.otherDrugs ? (
+              {members.some((member) => value.lifestyle[member.id]) ? (
                 <Card title="Lifestyle" onEdit={onEdit}>
-                  <ul className="flex flex-col">
-                    {lifestyleQuestions.map((question) => {
-                      const key =
-                        question.id === "other-drugs"
-                          ? "otherDrugs"
-                          : (question.id as "smoking" | "alcohol");
-                      const answer = value.lifestyle[key];
-                      if (!answer) return null;
+                  <div className="flex flex-col gap-5">
+                    {members.map((member) => {
+                      const life = value.lifestyle[member.id];
+                      if (!life) return null;
 
                       return (
-                        <li
-                          key={question.id}
-                          className="flex items-start justify-between gap-4 border-t border-grey-150 py-3 first:border-t-0 first:pt-0"
-                        >
-                          <p className="text-[14px] leading-[1.5] text-ink">
-                            {question.title}
-                            {question.id === "smoking" &&
-                            answer === "yes" &&
-                            value.lifestyle.smokingCount ? (
-                              <span className="block text-ink-secondary">
-                                {question.detail}: {value.lifestyle.smokingCount}
-                              </span>
-                            ) : null}
+                        <div key={member.id}>
+                          <p className="ff-figures mb-2 text-[14px] leading-none font-semibold text-ink">
+                            {member.name}{" "}
+                            <span className="font-normal text-ink-muted">
+                              ({member.relation})
+                            </span>
                           </p>
-                          <p
-                            className={`shrink-0 text-[14px] leading-[1.5] font-medium ${
-                              answer === "yes" ? "text-success" : "text-error-text"
-                            }`}
-                          >
-                            {answer === "yes" ? "Yes" : "No"}
-                          </p>
-                        </li>
+                          <ul className="flex flex-col">
+                            {lifestyleQuestions.map((question) => {
+                              const key =
+                                question.id === "other-drugs"
+                                  ? "otherDrugs"
+                                  : (question.id as "smoking" | "alcohol");
+                              const answer = life[key];
+                              if (!answer) return null;
+
+                              return (
+                                <li
+                                  key={question.id}
+                                  className="flex items-start justify-between gap-4 border-t border-grey-150 py-3 first:border-t-0 first:pt-0"
+                                >
+                                  <p className="text-[14px] leading-[1.5] text-ink">
+                                    {question.title}
+                                    {question.id === "smoking" &&
+                                    answer === "yes" &&
+                                    life.smokingCount ? (
+                                      <span className="block text-ink-secondary">
+                                        {question.detail}: {life.smokingCount}
+                                      </span>
+                                    ) : null}
+                                  </p>
+                                  <p
+                                    className={`shrink-0 text-[14px] leading-[1.5] font-medium ${
+                                      answer === "yes"
+                                        ? "text-success"
+                                        : "text-error-text"
+                                    }`}
+                                  >
+                                    {answer === "yes" ? "Yes" : "No"}
+                                  </p>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
                       );
                     })}
-                  </ul>
+                  </div>
                 </Card>
               ) : null}
 

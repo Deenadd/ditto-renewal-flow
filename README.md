@@ -134,18 +134,24 @@ Spacing, type, colour and line breaks match. Decisions worth knowing:
     The build reads back the labels the form actually asked for.
 21. **Payment step policy name.** The frame's policy bar reads "Care Supreme"
     on that one screen. The build keeps "Optima Secure" throughout.
+22. **v2 first step button.** The Address frame draws "Confirm and submit" even
+    though three steps follow it. The build shows "Next step" until the last
+    step, which is what the other three frames do.
+23. **Payment redirect.** The payment step opens the same insurer redirect
+    dialog the KYC step uses. No frame specifies a payment gateway.
 
 ## What "Yes" opens
 
 | Question | Answering Yes reveals |
 | --- | --- |
 | 1. Moved since last year? | A pin code field |
-| 2. Need to add or remove anyone? | A form to add a member, plus a notice that removals go through an advisor |
-| 3. Any new health conditions? | A line inviting the user to contact an advisor |
+| 2. Change your contact details? | Full name, phone and mail |
+| 3. Need to add or remove anyone? | A form to add a member, plus a notice that removals go through an advisor |
 | 4. Want to increase your cover? | Three cover options, ₹15L, ₹20L and ₹25L, opening on the ₹15L already held |
-| 5. Change the refund account? | A bank form |
-| 6. Change the nominee? | A nominee switch list |
-| 7. Add new add-ons? | The add-ons card: three locked, five recommended, and a collapsed group |
+| 5. Add new add-ons? | The add-ons card: three locked, five recommended, and a collapsed group |
+| 6. Any new health conditions? | A line inviting the user to contact an advisor |
+| 7. Change the refund account? | A bank form |
+| 8. Change the nominee? | A nominee switch list |
 
 "Clear all changes" appears in the footer as soon as any question is answered
 Yes, and resets every answer and follow-up back to the policy on file.
@@ -208,10 +214,33 @@ component driven by how far the journey has got: earlier steps carry a green
 check, the step in play carries its own button, and the sidebar panel changes
 with it, from the KYC steps to the proposal steps to the payment modes.
 
-The form itself runs communication address, two medical history sections and
-lifestyle. Each member gets an accordion with a live count of what is still
-unanswered. In Medical History 2 a "Yes" opens six fields for the diagnosis and
-treatment. The sidebar tracker follows whichever section is on screen.
+### What the form asks
+
+The proposal only asks what the review answers made necessary.
+
+| Review answer | Proposal steps |
+| --- | --- |
+| Moved since last year: Yes | Communication address |
+| Need to add or remove anyone: Yes | Medical history 1, Medical history 2, Lifestyle |
+| Neither | No proposal form at all |
+
+With neither, the proposal step drops off the anchor screen and the journey
+goes to payment. Answer No to everything on the review and KYC drops too,
+leaving payment and issuance, as node `123:12651` draws it.
+
+The health questions are asked about whoever was just added, since that is the
+person the insurer has no history for.
+
+### Two versions
+
+The sidebar carries a **Turn on v2 version** switch. v1 is the whole form on one
+page with the sidebar tracker following whatever is on screen. v2 takes it one
+step at a time behind a tab bar, with Next step between steps and Confirm and
+submit on the last (nodes `123:11849` to `123:12025`).
+
+Either way, each member gets an accordion with a live count of what is still
+unanswered, and in Medical History 2 a "Yes" opens six fields for the diagnosis
+and treatment.
 
 "Confirm and submit" opens the summary, which spans the full width with no
 sidebar, as drawn. Each card can be collapsed or sent back to the form with

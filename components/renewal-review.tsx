@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CalculatingPremium } from "@/components/calculating-premium";
 import { AnchorScreen } from "@/components/anchor-screen";
+import { GatewayDialog } from "@/components/gateway-dialog";
 import { KycScreen } from "@/components/kyc-screen";
 import {
   ProposalFormScreen,
   emptyProposal,
+  type ProposalMember,
   type ProposalState,
 } from "@/components/proposal-form";
 import { ProposalSummaryScreen } from "@/components/proposal-summary";
@@ -20,6 +22,7 @@ import {
 import {
   AddOnsFollowUp,
   BankFollowUp,
+  ContactFollowUp,
   ConditionsFollowUp,
   CoverFollowUp,
   LocationFollowUp,
@@ -27,19 +30,23 @@ import {
   NomineeFollowUp,
   type AddOnState,
   type BankForm,
+  type ContactForm,
   type NewMember,
 } from "@/components/follow-ups";
 import type { Answer } from "@/components/yes-no-group";
 import {
   bankFormDefaults,
+  contactDetails,
   coverOptions,
   coveredMembers,
   nomineeCandidates,
   defaultCoverId,
   recommendedAddOns,
   questions,
+  type IssuanceStepId,
   type QuestionId,
 } from "@/lib/renewal-data";
+import { proposalStepsFor } from "@/lib/proposal-data";
 
 type Answers = Partial<Record<QuestionId, Answer>>;
 
@@ -53,7 +60,8 @@ type Status =
   | "anchor"
   | "kyc"
   | "proposal"
-  | "proposal-summary";
+  | "proposal-summary"
+  | "payment-gateway";
 
 const defaultMember: NewMember = {
   fullName: "",
@@ -78,11 +86,14 @@ export function RenewalReview() {
   const [member, setMember] = useState<NewMember>(defaultMember);
   const [cover, setCover] = useState<string>(defaultCoverId);
   const [bankForm, setBankForm] = useState<BankForm>({ ...bankFormDefaults });
+  const [contact, setContact] = useState<ContactForm>({ ...contactDetails });
   const [nominees, setNominees] = useState<string[]>(defaultNominees);
   const [addOns, setAddOns] = useState<AddOnState>(defaultAddOns);
   const [status, setStatus] = useState<Status>("review");
-  /** How far the issuance journey has got: 1 KYC, 2 proposal, 3 payment. */
-  const [journeyStep, setJourneyStep] = useState(1);
+  /** Which issuance step is in play. */
+  const [journeyStep, setJourneyStep] = useState<IssuanceStepId>("kyc");
+  /** v2 runs the proposal one step at a time. */
+  const [steppedForm, setSteppedForm] = useState(false);
   const [proposal, setProposal] = useState<ProposalState>(emptyProposal);
 
   const answeredCount = useMemo(
@@ -118,6 +129,13 @@ export function RenewalReview() {
           : "Same address, 600096, Chennai",
       },
       {
+        id: "contact" as QuestionId,
+        changed: changed("contact"),
+        text: changed("contact")
+          ? `New contact details, ${contact.phone}`
+          : "Same contact details, no change",
+      },
+      {
         id: "members" as QuestionId,
         changed: changed("members"),
         text: changed("members")
@@ -127,32 +145,11 @@ export function RenewalReview() {
           : `Same ${coveredMembers.length} people covered`,
       },
       {
-        id: "conditions" as QuestionId,
-        changed: changed("conditions"),
-        text: changed("conditions")
-          ? "New medical conditions to review with an advisor"
-          : "You have same medical conditions",
-      },
-      {
         id: "cover" as QuestionId,
         changed: changed("cover"),
         text: changed("cover")
           ? `Cover set to ${coverLabel}`
           : "Same ₹15 Lakhs cover",
-      },
-      {
-        id: "refund-account" as QuestionId,
-        changed: changed("refund-account"),
-        text: changed("refund-account")
-          ? `New account, ${bankForm.bankName}`
-          : "Same, Deena's Saving Account x5677 (SBI)",
-      },
-      {
-        id: "nominee" as QuestionId,
-        changed: changed("nominee"),
-        text: changed("nominee")
-          ? `Nominee updated, ${nominees.length} named`
-          : "Same nominee, Sneha Kumari, spouse",
       },
       {
         id: "add-ons" as QuestionId,
@@ -161,8 +158,29 @@ export function RenewalReview() {
           ? `${addOns.selected.length} add-ons selected`
           : "No changes in current add-ons.",
       },
+      {
+        id: "conditions" as QuestionId,
+        changed: changed("conditions"),
+        text: changed("conditions")
+          ? "New medical conditions to review with an advisor"
+          : "You have same medical conditions",
+      },
+      {
+        id: "refund-account" as QuestionId,
+        changed: changed("refund-account"),
+        text: changed("refund-account")
+          ? `New account, ${bankForm.bankName}`
+          : "Same, Deena's Saving Account xxxx5677 (SBI)",
+      },
+      {
+        id: "nominee" as QuestionId,
+        changed: changed("nominee"),
+        text: changed("nominee")
+          ? `Nominee updated, ${nominees.length} named`
+          : "Same nominee, Sneha Kumari, spouse",
+      },
     ];
-  }, [answers, pinCode, member.fullName, cover, bankForm.bankName, nominees, addOns]);
+  }, [answers, pinCode, contact.phone, member.fullName, cover, bankForm.bankName, nominees, addOns]);
 
   function answer(id: QuestionId, value: Answer) {
     setAnswers((previous) => ({ ...previous, [id]: value }));
@@ -198,6 +216,7 @@ export function RenewalReview() {
     setMember(defaultMember);
     setCover(defaultCoverId);
     setBankForm({ ...bankFormDefaults });
+    setContact({ ...contactDetails });
     setNominees(defaultNominees);
     setAddOns(defaultAddOns);
   }
@@ -219,6 +238,15 @@ export function RenewalReview() {
             showDivider={context === "review"}
             onChange={(patch) =>
               setMember((previous) => ({ ...previous, ...patch }))
+            }
+          />
+        );
+      case "contact":
+        return (
+          <ContactFollowUp
+            form={contact}
+            onChange={(patch) =>
+              setContact((previous) => ({ ...previous, ...patch }))
             }
           />
         );
@@ -261,9 +289,44 @@ export function RenewalReview() {
     return open;
     // followUp reads every piece of follow-up state, all listed here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answers, pinCode, member, cover, bankForm, nominees, addOns]);
+  }, [answers, pinCode, member, cover, bankForm, contact, nominees, addOns]);
 
   /* Values the reviewer changed, so the sidebar shows the policy being bought. */
+  /* Which proposal steps this journey needs, and therefore whether the
+     proposal step belongs on the anchor screen at all. */
+  const proposalSteps = useMemo(
+    () =>
+      proposalStepsFor({
+        location: answers.location === "yes",
+        members: answers.members === "yes",
+      }),
+    [answers.location, answers.members],
+  );
+
+  /* The health questions are asked about whoever was just added, which is who
+     the insurer has no history for. */
+  const proposalMembers: ProposalMember[] = useMemo(
+    () =>
+      answers.members === "yes"
+        ? [
+            {
+              id: "new-member",
+              name: member.fullName || "New member",
+              relation: member.relationship || "member",
+            },
+          ]
+        : [],
+    [answers.members, member.fullName, member.relationship],
+  );
+
+  const journeySteps = useMemo(() => {
+    const list: IssuanceStepId[] = [];
+    if (hasChanges) list.push("kyc");
+    if (proposalSteps.length > 0) list.push("proposal");
+    list.push("payment", "issuance");
+    return list;
+  }, [hasChanges, proposalSteps.length]);
+
   const pinCodeLabel =
     answers.location === "yes" && pinCode.length === 6
       ? `${pinCode}, Chennai`
@@ -343,7 +406,10 @@ export function RenewalReview() {
             : undefined
         }
         onBack={() => setStatus("review")}
-        onBuy={() => setStatus("anchor")}
+        onBuy={() => {
+          setJourneyStep(hasChanges ? "kyc" : "payment");
+          setStatus("anchor");
+        }}
       />
     );
   }
@@ -353,7 +419,7 @@ export function RenewalReview() {
       <KycScreen
         onBack={() => setStatus("anchor")}
         onDone={() => {
-          setJourneyStep((current) => Math.max(current, 2));
+          setJourneyStep(proposalSteps.length > 0 ? "proposal" : "payment");
           setStatus("anchor");
         }}
       />
@@ -365,6 +431,10 @@ export function RenewalReview() {
       <ProposalFormScreen
         value={proposal}
         onChange={setProposal}
+        steps={proposalSteps}
+        members={proposalMembers}
+        stepped={steppedForm}
+        onToggleStepped={() => setSteppedForm((on) => !on)}
         onBack={() => setStatus("anchor")}
         onClear={() => setProposal(emptyProposal)}
         onSubmit={() => setStatus("proposal-summary")}
@@ -376,20 +446,23 @@ export function RenewalReview() {
     return (
       <ProposalSummaryScreen
         value={proposal}
+        members={proposalMembers}
         onBack={() => setStatus("proposal")}
         onEdit={() => setStatus("proposal")}
         onSubmit={() => {
-          setJourneyStep((current) => Math.max(current, 3));
+          setJourneyStep("payment");
           setStatus("anchor");
         }}
       />
     );
   }
 
-  if (status === "anchor") {
+  if (status === "anchor" || status === "payment-gateway") {
     return (
+      <>
       <AnchorScreen
-        step={journeyStep}
+        steps={journeySteps}
+        current={journeyStep}
         pinCode={pinCodeLabel}
         cover={coverLabel}
         selectedAddOns={addOns.selected}
@@ -399,10 +472,19 @@ export function RenewalReview() {
             : undefined
         }
         onBack={() => setStatus("summary")}
-        onStart={() =>
-          setStatus(journeyStep === 1 ? "kyc" : "proposal")
-        }
+        onStart={() => {
+          if (journeyStep === "kyc") setStatus("kyc");
+          else if (journeyStep === "proposal") setStatus("proposal");
+          else setStatus("payment-gateway");
+        }}
       />
+      {status === "payment-gateway" ? (
+        <GatewayDialog
+          onClose={() => setStatus("anchor")}
+          onContinue={() => setStatus("anchor")}
+        />
+      ) : null}
+      </>
     );
   }
 

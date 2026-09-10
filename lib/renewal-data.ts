@@ -9,12 +9,13 @@
 
 export type QuestionId =
   | "location"
+  | "contact"
   | "members"
-  | "conditions"
   | "cover"
+  | "add-ons"
+  | "conditions"
   | "refund-account"
-  | "nominee"
-  | "add-ons";
+  | "nominee";
 
 export type Question = {
   id: QuestionId;
@@ -30,16 +31,16 @@ export const questions: Question[] = [
       "Premiums shift by city. If you've moved, we'll re-check the price before you renew sometimes it drops.",
   },
   {
+    id: "contact",
+    title: "Change your contact details?",
+    description:
+      "Policy documents and claim OTPs come here.\nDeena Dhayalan · 98xxx xxx21 · deenaafvev4gs@gmail.com",
+  },
+  {
     id: "members",
     title: "Need to add or remove anyone?",
     description:
       "A new baby or spouse left off the policy is the most common reason a claim gets rejected.",
-  },
-  {
-    id: "conditions",
-    title: "Any new health conditions to declare?",
-    description:
-      "Tell us about anything new, even if it's minor. Undeclared conditions can void a claim later.",
   },
   {
     id: "cover",
@@ -48,22 +49,35 @@ export const questions: Question[] = [
       "In 2027, hospital costs rose, highlighting challenges. As expenses rise, individuals face strain on affordability.",
   },
   {
-    id: "refund-account",
-    title: "Change, Deena's Saving Account x5677 (SBI)?",
-    description: "Used for auto-debit and claim payouts.",
-  },
-  {
-    id: "nominee",
-    title: "Change nominee from Sneha Kumari (spouse)?",
-    description: "The nominee is who gets paid.",
-  },
-  {
     id: "add-ons",
     title: "Like to add new add-ons to increase more coverage?",
     description:
       "Add-ons sit on top of your base cover. Pick the ones that fit how your family uses the policy.",
   },
+  {
+    id: "conditions",
+    title: "Any new health conditions to declare?",
+    description:
+      "Tell us about anything new, even if it's minor. Undeclared conditions can void a claim later.",
+  },
+  {
+    id: "refund-account",
+    title: "Change, Deena's Saving Account xxxx5677 (SBI)?",
+    description: "Used for auto-debit and claim payouts.",
+  },
+  {
+    id: "nominee",
+    title: "Change nominee from Sneha Kumari, spouse?",
+    description: "The nominee is who gets paid.",
+  },
 ];
+
+/** What question 2 shows today, and the shape of the form behind it. */
+export const contactDetails = {
+  fullName: "Deena Dhayalan",
+  phone: "9042019348",
+  email: "deenadhayalana3d@gmail.com",
+};
 
 /** Read-only chips under question 2 showing who is on the policy today. */
 export const coveredMembers = [
@@ -444,29 +458,31 @@ export type IssuanceStep = {
   action?: { label: string; note?: string };
 };
 
-export const issuanceSteps: IssuanceStep[] = [
-  {
+export type IssuanceStepId = "kyc" | "proposal" | "payment" | "issuance";
+
+export const issuanceStepById: Record<IssuanceStepId, IssuanceStep> = {
+  kyc: {
     title: "Complete your KYC",
     description:
       "As per IRDAI, Customer needs to completes KYC before buying a policy!",
     action: { label: "Start", note: "Takes 5 mins" },
   },
-  {
+  proposal: {
     title: "Proposal form",
     description: "Answer a set of questions to fill out your online application",
     action: { label: "Start", note: "Takes 5 mins" },
   },
-  {
+  payment: {
     title: "Make payment",
     description: "Make payment of your first premium",
     action: { label: "Continue" },
   },
-  {
+  issuance: {
     title: "Policy issuance",
     description:
       "If everything checks out, You will receive a copy of the policy as soon as the insurer accepts the proposal.",
   },
-];
+};
 
 export const supportPanel = {
   platform: {

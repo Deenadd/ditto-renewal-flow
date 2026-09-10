@@ -142,6 +142,56 @@ export function MemberFollowUp({
 }
 
 /* -------------------------------------------------------------------------
+   Contact details (node 123:10305)
+   ------------------------------------------------------------------------- */
+
+export type ContactForm = {
+  fullName: string;
+  phone: string;
+  email: string;
+};
+
+export function ContactFollowUp({
+  form,
+  onChange,
+}: {
+  form: ContactForm;
+  onChange: (patch: Partial<ContactForm>) => void;
+}) {
+  return (
+    <FollowUp labelledBy="contact-heading">
+      <h3 id="contact-heading" className="sr-only">
+        Update the contact details on the policy
+      </h3>
+      <div className="flex flex-col gap-6">
+        <TextField
+          label="Full name (as on PAN or Aadhaar)"
+          value={form.fullName}
+          placeholder="Full name"
+          onChange={(value) => onChange({ fullName: value })}
+        />
+        <div className="grid gap-6 sm:grid-cols-2">
+          <TextField
+            label="Phone number"
+            value={form.phone}
+            inputMode="numeric"
+            maxLength={10}
+            placeholder="Mobile number"
+            onChange={(value) => onChange({ phone: value.replace(/\D/g, "") })}
+          />
+          <TextField
+            label="Mail ID"
+            value={form.email}
+            placeholder="you@example.com"
+            onChange={(value) => onChange({ email: value })}
+          />
+        </div>
+      </div>
+    </FollowUp>
+  );
+}
+
+/* -------------------------------------------------------------------------
    3. Anything come up this year? (node 76:6125)
    ------------------------------------------------------------------------- */
 
