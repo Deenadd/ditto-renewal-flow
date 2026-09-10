@@ -51,6 +51,7 @@ components/
   calculating-premium.tsx  Full-page loading screen after Confirm & continue
   renewal-summary.tsx  Change summary and policy periods
   anchor-screen.tsx    What is left to do once the policy is bought
+  kyc-screen.tsx       Proposer KYC lookup and the gateway redirect
   icons.tsx            Icons inlined from the Figma export
   ui/field.tsx         Text input and select
   ui/switch.tsx        Track-and-knob switch
@@ -59,6 +60,7 @@ lib/
 public/brand/          Logo and insurer artwork exported from Figma
 public/loading/        Calculator animation for the loading screen
 public/anchor/         Banner and support artwork for the anchor screen
+public/kyc/            Document and sparkle artwork for the KYC screen
 ```
 
 ## Design fidelity
@@ -166,6 +168,17 @@ review; "Buy this policy" moves to the anchor screen.
 issues: KYC, the proposal form, payment and issuance, with only the first step
 open. A blue banner explains that progress is autosaved, and the sidebar drops
 the deadline banner and the benefits card in favour of a support panel.
+
+## Proposer KYC
+
+Start on the KYC step opens the CKYC lookup (nodes `121:7357`, `121:7520`,
+`121:7699`). Enter a PAN, date of birth and phone number, and "Fetch KYC
+details" reveals what the lookup returned. "Details don't match" clears it;
+"Verify & Continue" opens the redirect notice for the insurer's gateway.
+
+The gateway dialog closes on Escape or on the backdrop. Continue would leave for
+`hdfcergoinsurance.kycgateway.com`, which is outside the prototype, so it
+returns to the anchor screen instead.
 
 The sidebar switches to its detailed variant here: the plan row with its Switch
 link, an added member shown as a green badge, and a premium breakdown whose

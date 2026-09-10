@@ -480,3 +480,55 @@ export const supportPanel = {
     email: "help@joinditto.in",
   },
 };
+
+/* ---------------------------------------------------------------------------
+   Proposer KYC (nodes 121:7357, 121:7520, 121:7699).
+   --------------------------------------------------------------------------- */
+
+export const kycUploadBanner = {
+  title: "Don't have PAN and Aadhaar card handy?",
+  body: "You can upload documents (Pan card, Voter Id, Driving License, Passport). The insurance team will verify and complete your KYC before policy issuance.",
+  link: "Click here to upload.",
+};
+
+export const kycSteps = [
+  "Enter PAN card number",
+  "Add date of birth in DD/MM/YYYY",
+  "Click fetch KYC details",
+];
+
+export const kycHelp = {
+  proposer: {
+    title: "Who is a Proposer?",
+    body: "Who is paying for the policy has to be the proposer.",
+    stepsTitle: "Steps to complete PAN KYC",
+    stepsLead: "Follow these steps for PAN KYC",
+  },
+  delay: {
+    title: "Delay in verification",
+    body: "Please check reach out to your advisor or send a email to us.",
+    email: "support@joinditto.in",
+  },
+  failed: {
+    title: "Failed without reason?",
+    body: "Talk to us for instant response",
+    label: "Contact us at:",
+    phone: "080 - 48816818",
+    email: "claims@joinditto.in",
+  },
+};
+
+/** What the CKYC lookup returns (node 121:7520). */
+export const kycRecord = {
+  name: "BAAINI MAHESH",
+  pan: "EUAPM5376K",
+  dateOfBirth: "05-Oct-1998",
+  permanentAddress: ["Sangareddy,", "Sangareddy - 502001"],
+  currentAddress: ["Sangareddy,", "Sangareddy - 502001"],
+};
+
+export const kycGateway = {
+  title: "Redirecting to HDFC ERGO",
+  body: "Kindly proceed with the KYC through the HDFC ERGO Insurance KYC gateway.",
+  url: "hdfcergoinsurance.kycgateway.com",
+};

@@ -32,6 +32,8 @@ type TextFieldProps = {
   gap?: "sm" | "md";
   placeholder?: string;
   type?: "text" | "date";
+  /** Fixed leading text, such as the +91 on a phone number. */
+  prefix?: string;
 };
 
 /** input (nodes 70:3336, 70:3426). */
@@ -46,6 +48,7 @@ export function TextField({
   gap = "sm",
   placeholder,
   type = "text",
+  prefix,
 }: TextFieldProps) {
   const id = useId();
 
@@ -55,6 +58,11 @@ export function TextField({
         {label}
       </Label>
       <span className={control}>
+        {prefix ? (
+          <span className="-my-3 flex h-10 shrink-0 items-center border-r border-grey-200 pr-3 text-ink-secondary">
+            {prefix}
+          </span>
+        ) : null}
         <input
           id={id}
           type={type}

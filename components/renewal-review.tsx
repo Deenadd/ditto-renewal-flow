@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CalculatingPremium } from "@/components/calculating-premium";
 import { AnchorScreen } from "@/components/anchor-screen";
+import { KycScreen } from "@/components/kyc-screen";
 import { RenewalSummary, type SummaryLine } from "@/components/renewal-summary";
 import { Question } from "@/components/question";
 import { ConditionsTable } from "@/components/conditions-table";
@@ -39,7 +40,7 @@ type Answers = Partial<Record<QuestionId, Answer>>;
 /** How long the premium calculation screen is held before the result shows. */
 const CALCULATING_MS = 3200;
 
-type Status = "review" | "calculating" | "summary" | "anchor";
+type Status = "review" | "calculating" | "summary" | "anchor" | "kyc";
 
 const defaultMember: NewMember = {
   fullName: "",
@@ -331,6 +332,15 @@ export function RenewalReview() {
     );
   }
 
+  if (status === "kyc") {
+    return (
+      <KycScreen
+        onBack={() => setStatus("anchor")}
+        onDone={() => setStatus("anchor")}
+      />
+    );
+  }
+
   if (status === "anchor") {
     return (
       <AnchorScreen
@@ -343,7 +353,7 @@ export function RenewalReview() {
             : undefined
         }
         onBack={() => setStatus("summary")}
-        onStart={() => setStatus("summary")}
+        onStart={() => setStatus("kyc")}
       />
     );
   }
