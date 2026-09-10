@@ -343,10 +343,6 @@ export function RenewalReview() {
   function attachment(id: QuestionId) {
     const changed = answers[id] === "yes";
 
-    if (id === "location") {
-      return changed ? followUp(id, "review") : null;
-    }
-
     if (id === "members") {
       return (
         <>
@@ -377,15 +373,9 @@ export function RenewalReview() {
       );
     }
 
-    if (id === "cover") {
-      return changed ? followUp(id, "review") : null;
-    }
-
-    if (id === "refund-account" || id === "nominee" || id === "add-ons") {
-      return changed ? followUp(id, "review") : null;
-    }
-
-    return null;
+    /* Everything else is just its follow-up, so a new question needs no
+       wiring here beyond having one. */
+    return changed ? followUp(id, "review") : null;
   }
 
   if (status === "calculating") {
