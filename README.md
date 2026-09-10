@@ -175,8 +175,11 @@ Start on the KYC step opens the CKYC lookup (nodes `121:7357`, `121:7520`,
 `121:7699`). Fill the PAN, date of birth and phone number, and "Fetch KYC
 details" reveals what the lookup returned. The values are placeholders here, so
 the button only checks that the three fields are filled, not that they are well
-formed. "Details don't match" clears it;
-"Verify & Continue" opens the redirect notice for the insurer's gateway.
+formed.
+
+"Verify & Continue" accepts the record and returns to the anchor screen.
+"Details don't match" opens the redirect notice, because a mismatch is what
+sends the proposer to the insurer's own gateway to finish KYC there.
 
 The gateway dialog closes on Escape or on the backdrop. Continue would leave for
 `hdfcergoinsurance.kycgateway.com`, which is outside the prototype, so it

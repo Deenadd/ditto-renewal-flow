@@ -404,16 +404,18 @@ export function KycScreen({
             <div className="mt-6 flex items-center justify-end gap-3 border-t border-grey-150 pt-6">
               {fetched ? (
                 <>
+                  {/* A mismatch is what sends the proposer to the insurer's
+                      own gateway to finish KYC there. */}
                   <button
                     type="button"
-                    onClick={() => setFetched(false)}
+                    onClick={() => setGateway(true)}
                     className="ff-case flex h-10 items-center justify-center rounded-lg border border-grey-200 bg-white px-3 text-[15px] leading-[1.15] font-medium text-ink shadow-card transition-colors hover:bg-grey-50"
                   >
                     Details don&rsquo;t match
                   </button>
                   <button
                     type="button"
-                    onClick={() => setGateway(true)}
+                    onClick={onDone}
                     className="ff-case flex h-10 items-center justify-center rounded-lg bg-primary px-3 text-[15px] leading-[1.15] font-medium text-ink-inverted transition-colors hover:bg-primary-hover"
                   >
                     Verify &amp; Continue
