@@ -135,13 +135,51 @@ export const coverLegend = [
   { id: "good", label: "Right for your family" },
 ] as const;
 
+/** How each cover picker presents the same five stops. */
+export type CoverLayout = "slider" | "cards" | "stepper";
+
+export const coverLayoutOptions: {
+  value: CoverLayout;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    value: "slider",
+    label: "Version 1 · Slider",
+    hint: "The band you land in carries the advice.",
+  },
+  {
+    value: "cards",
+    label: "Version 2 · Cards",
+    hint: "Every amount priced up front, one click to pick.",
+  },
+  {
+    value: "stepper",
+    label: "Version 3 · Stepper",
+    hint: "One amount at a time, with what it costs a month.",
+  },
+];
+
 /** Which of the three treatments the chosen cover falls into. */
 export type CoverZone = "low" | "good" | "high";
+
+/** What each band means, said the same way wherever a picker names it. */
+export const zoneLabels: Record<CoverZone, string> = {
+  low: "Not enough",
+  good: "Right for your family",
+  high: "Extra room",
+};
 
 export function zoneFor(lakhs: number): CoverZone {
   if (lakhs < RECOMMENDED_LAKHS) return "low";
   if (lakhs === RECOMMENDED_LAKHS) return "good";
   return "high";
+}
+
+/** What this cover costs over the one on the policy today, a year and a month. */
+export function deltaFor(lakhs: number) {
+  const year = premiumFor(lakhs) - PREMIUM_AT_CURRENT;
+  return { year, month: Math.round(year / 12 / 10) * 10 };
 }
 
 export type CoverVerdict = {

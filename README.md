@@ -16,7 +16,12 @@ There are two renewal screens, both leading into the same journey:
 | Route | Screen |
 | --- | --- |
 | `/` | The eight Yes/No questions (node `63:2306` and its successors) |
-| `/v2` | **V2** — the policy shown as five editable checks (node `142:3114`), with the cover slider from node `142:3692` |
+| `/v2` | **V2** — the policy shown as five editable checks (node `142:3114`), with the cover pickers from node `142:3692` |
+
+The menu beside the brand mark swaps between them from anywhere in the
+journey. It is a menu button rather than a `<select>` on purpose: choosing an
+option here changes the page, and a select fires its change on every arrow
+key, so a keyboard user would be moved before they had chosen.
 
 ## Stack
 
@@ -48,7 +53,7 @@ app/
   page.tsx             The Yes/No review screen
   v2/page.tsx          The V2 renewal screen, same journey behind it
 components/
-  site-header.tsx      Nav bar; the brand mark steps back through the journey
+  site-header.tsx      Nav bar; brand mark steps back, menu swaps version
   renewal-review.tsx   Client component holding all answer state
   question.tsx         One numbered question row
   yes-no-group.tsx     Accessible Yes/No radio pair
@@ -67,8 +72,13 @@ components/
   icons.tsx            Icons inlined from the Figma export
   ui/field.tsx         Text input and select
   ui/switch.tsx        Track-and-knob switch
+  ui/version-menu.tsx  Menu button behind both version switchers
+  v2/renewal-v2.tsx    The five checks, and the state behind them
+  v2/cover-picker.tsx  Three cover controls and the verdict they share
 lib/
   renewal-data.ts      All copy and figures from the design
+  proposal-data.ts     Medical questions, steps and step notes
+  v2-data.ts           V2 copy, cover stops and the verdict per stop
 public/brand/          Logo and insurer artwork exported from Figma
 public/loading/        Calculator animation for the loading screen
 public/anchor/         Banner and support artwork for the anchor screen
@@ -195,9 +205,27 @@ version produces, so the premium calculation, summary, KYC, proposal form and
 payment steps that follow are the journey already built. Stepping back with the
 brand mark finds the screen exactly as it was left.
 
-### The cover slider
+### Picking the cover
 
-Nodes `142:3693`, `142:3789` and `142:3883` draw the slider at ₹15L, ₹20L and
+Three versions of the same decision, behind the menu at the trailing edge of
+the heading. They share the verdict card beneath them, so the comparison is
+about the control alone.
+
+| Version | Control | What it is good at |
+| --- | --- | --- |
+| 1 · Slider | Drag or arrow along a five-stop track | The band you land in carries the advice; the frame's own design |
+| 2 · Cards | Four priced cards, one click | Every amount and its premium are legible without moving anything |
+| 3 · Stepper | − / + around one amount | Quietest of the three, and prices the change by the month |
+
+Versions 2 and 3 exist because the slider makes you move the handle to find out
+what ₹25 lakh costs. The cards answer that before you touch anything, and the
+stepper answers the question people actually budget against — what it adds to
+the month. All three reach the same four stops and write to the same value, and
+switching between them keeps the cover you had picked.
+
+#### Version 1, the slider
+
+Nodes `142:3693`, `142:3789` and `142:3883` draw it at ₹15L, ₹20L and
 ₹25L. The track carries the advice rather than just the value: it is yellow up
 to the ₹20L recommendation and green past it, and the blue fill covers whichever
 of those the chosen amount has already reached. Three things then move together:
@@ -211,13 +239,26 @@ of those the chosen amount has already reached. Three things then move together:
 It is a real `<input type="range">` under a drawn track, so arrow keys, Home and
 End, click-to-position and drag all work, and the value is announced as
 "₹20 lakh, ₹40,429 a year, recommended for your family". ₹10L is drawn greyed
-and is out of range, because cover does not drop at renewal.
+and is out of range, because cover does not drop at renewal — which is also why
+the other two versions offer four amounts rather than five.
 
 The handle and fill move on `transform` over 200ms `cubic-bezier(0.23, 1, 0.32, 1)`,
-so dragging across stops retargets smoothly instead of restarting. The card
-below changes its whole contents at once, so it blurs through the swap over
-260ms rather than crossfading two readable copies of different text — and holds
-still under `prefers-reduced-motion`.
+so dragging across stops retargets smoothly instead of restarting.
+
+#### Versions 2 and 3
+
+Both are native form controls with the chrome drawn over them: radios in a
+fieldset for the cards, two buttons for the stepper, so neither needed a
+keyboard model written for it. The cards state the amount, the premium, what it
+adds over today's price, and which band it falls in; the stepper keeps the
+sense of position as a four-segment meter and says the difference as a monthly
+figure. Selection is never colour alone — a tick on the cards, a filled meter
+and a named band on the stepper.
+
+The card below all three changes its whole contents at once, so it blurs
+through the swap over 260ms rather than crossfading two readable copies of
+different text, and the control itself blurs through the same swap when the
+version changes. Both hold still under `prefers-reduced-motion`.
 
 ## What "Yes" opens
 
@@ -362,3 +403,8 @@ in a polite live region. Every zone is marked by a shape as well as a colour —
 grip versus shield on the handle — so the advice does not rest on colour alone.
 The progress bar is an ordered list with `aria-current="step"` rather than tabs,
 since steps 2 and 3 are not somewhere you can go yet.
+
+The version menus follow the ARIA menu button pattern: the trigger opens on
+Enter, Space or Down, focus moves onto the checked option, arrows and Home/End
+move within, Escape closes and returns focus to the trigger, and only Enter,
+Space or a click commits. Nothing changes while you are still looking.

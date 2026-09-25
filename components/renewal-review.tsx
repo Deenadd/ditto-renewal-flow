@@ -633,7 +633,10 @@ export function RenewalReview({ variant = "v1" }: { variant?: "v1" | "v2" } = {}
 
   return (
     <>
-      <SiteHeader onBack={history.length > 0 ? goBack : undefined} />
+      <SiteHeader
+        onBack={history.length > 0 ? goBack : undefined}
+        version={variant}
+      />
       {screen()}
     </>
   );

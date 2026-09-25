@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { CoverSlider } from "@/components/v2/cover-slider";
+import { CoverPicker } from "@/components/v2/cover-picker";
 import { PolicySummary } from "@/components/policy-summary";
 import { SelectField, TextField } from "@/components/ui/field";
+import { VersionMenu } from "@/components/ui/version-menu";
 import {
   AttentionIcon,
   CheckMarkIcon,
@@ -20,6 +21,7 @@ import {
 } from "@/lib/renewal-data";
 import {
   CURRENT_LAKHS,
+  coverLayoutOptions,
 
   formatAddress,
   premiumFor,
@@ -35,6 +37,7 @@ import {
   v2MoreAddOns,
   v2PickedAddOns,
   v2Sections,
+  type CoverLayout,
   type V2AddOn,
   type V2Member,
 } from "@/lib/v2-data";
@@ -52,11 +55,14 @@ function Section({
   index,
   title,
   description,
+  action,
   children,
 }: {
   index: number;
   title: string;
   description: string;
+  /** Sits at the trailing edge of the heading, level with its first line. */
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -68,13 +74,21 @@ function Section({
         >
           {index}
         </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="text-[20px] leading-[1.3] font-semibold tracking-[-0.2px] text-ink">
+        {/* One grid so the control can follow the description in the DOM, and
+            still sit beside the heading once the row is wide enough. */}
+        <div className="grid min-w-0 flex-1 gap-x-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <h2 className="text-[20px] leading-[1.3] font-semibold tracking-[-0.2px] text-ink lg:col-start-1 lg:row-start-1">
             {title}
           </h2>
-          <p className="mt-2 max-w-[560px] text-[16px] leading-[1.5] text-ink-secondary">
+          <p className="mt-2 max-w-[560px] text-[16px] leading-[1.5] text-ink-secondary lg:col-span-2 lg:col-start-1 lg:row-start-2">
             {description}
           </p>
+          {action ? (
+            /* Nudged up 3px so a 32px control reads level with a 26px line. */
+            <div className="mt-3 w-fit lg:col-start-2 lg:row-start-1 lg:-mt-[3px] lg:justify-self-end lg:self-start">
+              {action}
+            </div>
+          ) : null}
         </div>
       </div>
       <div className="mt-3.5 sm:ml-8">{children}</div>
@@ -587,6 +601,8 @@ export type V2State = {
   lakhs: number;
   addOns: string[];
   periodId: string;
+  /** Which cover picker is on screen. A display choice, not an edit. */
+  coverLayout: CoverLayout;
 };
 
 export const initialV2State: V2State = {
@@ -600,6 +616,7 @@ export const initialV2State: V2State = {
   lakhs: CURRENT_LAKHS,
   addOns: v2DefaultAddOns,
   periodId: policyPeriods[0].id,
+  coverLayout: "slider",
 };
 
 /** What the reviewer touched, read the same way here and by the journey. */
@@ -629,7 +646,7 @@ export function RenewalV2({
   onChange: (next: V2State) => void;
   onConfirm: () => void;
 }) {
-  const { address, added, removed, lakhs, addOns, periodId } = value;
+  const { address, added, removed, lakhs, addOns, periodId, coverLayout } = value;
   const set = (patch: Partial<V2State>) => onChange({ ...value, ...patch });
 
   const members = useMemo(
@@ -641,7 +658,8 @@ export function RenewalV2({
   const changed = Object.values(touched).some(Boolean);
 
   function clearAll() {
-    onChange(initialV2State);
+    /* Which picker is on screen is not one of the reviewer's changes. */
+    onChange({ ...initialV2State, coverLayout });
   }
 
   const coverLabel =
@@ -721,8 +739,24 @@ export function RenewalV2({
               />
             </Section>
 
-            <Section index={3} {...v2Sections.cover}>
-              <CoverSlider lakhs={lakhs} onChange={(next) => set({ lakhs: next })} />
+            <Section
+              index={3}
+              {...v2Sections.cover}
+              action={
+                <VersionMenu
+                  label="Cover picker version"
+                  value={coverLayout}
+                  options={coverLayoutOptions}
+                  onChange={(next) => set({ coverLayout: next as CoverLayout })}
+                  align="end"
+                />
+              }
+            >
+              <CoverPicker
+                layout={coverLayout}
+                lakhs={lakhs}
+                onChange={(next) => set({ lakhs: next })}
+              />
             </Section>
 
             <Section index={4} {...v2Sections.addOns}>
