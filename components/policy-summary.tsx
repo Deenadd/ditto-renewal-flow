@@ -12,6 +12,7 @@ import {
   UserIcon,
   VerifiedDiscountIcon,
 } from "@/components/icons";
+import { useQuote } from "@/lib/quote-context";
 import {
   benefits,
   exclusions,
@@ -165,6 +166,10 @@ export function PolicySummary({
 } = {}) {
   const detailed = variant === "summary" || variant === "anchor";
   const collapsible = variant === "summary";
+  /* A price worked out on the first screen outranks the drawn figures. */
+  const quote = useQuote();
+  cover = cover ?? quote?.cover;
+  premium = premium ?? quote?.premium;
 
   return (
     <div className="flex flex-col gap-4">
@@ -254,7 +259,7 @@ export function PolicySummary({
                 >
                   {premium ?? policy.premium} /{" "}
                   <span className="text-[16px] leading-none font-normal tracking-[0.16px] text-ink-faint">
-                    {policy.premiumPeriod}
+                    {quote?.term ?? policy.premiumPeriod}
                   </span>
                 </dd>
               </div>
@@ -279,97 +284,114 @@ export function PolicySummary({
         {/* Premium breakdown */}
         <div className="px-5 pt-2 pb-5">
           <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-[14px] leading-none tracking-[-0.07px] text-ink">
-                {policy.basePremium.label}
-              </p>
-              <p className="ff-figures text-right text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
-                {policy.basePremium.value}
-              </p>
-            </div>
-
-            <hr className="border-grey-150" />
-
-            {collapsible ? (
-              <BreakdownSection
-                title="Previously Selected Add-ons"
-                count={`${policy.previousAddOns.length}`}
-                rows={policy.previousAddOns.map((addOn, index) => ({
-                  key: addOn.name,
-                  name: addOn.name,
-                  price: addOn.price,
-                  checked: true,
-                  highlight: index === 0,
-                }))}
-              />
+            {quote?.breakdown ? (
+              <dl className="flex flex-col gap-4">
+                {quote.breakdown.map((line) => (
+                  <div key={line.label} className="flex items-center justify-between gap-4">
+                    <dt className="text-[14px] leading-none tracking-[-0.07px] text-ink-secondary">
+                      {line.label}
+                    </dt>
+                    <dd className="ff-figures text-right text-[14px] leading-none font-medium tracking-[-0.14px] text-ink tabular-nums">
+                      {line.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             ) : (
-              <section className="flex flex-col gap-4">
-                <h4 className="text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
-                  Previously Selected Add-ons{" "}
-                  <span className="text-info">({policy.previousAddOns.length})</span>
-                </h4>
-                <dl className="flex flex-col gap-4">
-                  {policy.previousAddOns.map((addOn) => (
-                    <AddOnRow key={addOn.name} {...addOn} />
-                  ))}
-                </dl>
-              </section>
-            )}
-
-            {collapsible ? (
               <>
-                <hr className="border-grey-150" />
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-[14px] leading-none tracking-[-0.07px] text-ink">
+                  {policy.basePremium.label}
+                </p>
+                <p className="ff-figures text-right text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
+                  {policy.basePremium.value}
+                </p>
+              </div>
+
+              <hr className="border-grey-150" />
+
+              {collapsible ? (
                 <BreakdownSection
-                  title="Recommended Add-ons"
-                  count={`${selectedAddOns.length}/${recommendedAddOns.length}`}
-                  rows={recommendedAddOns.map((addOn) => ({
-                    key: addOn.id,
+                  title="Previously Selected Add-ons"
+                  count={`${policy.previousAddOns.length}`}
+                  rows={policy.previousAddOns.map((addOn, index) => ({
+                    key: addOn.name,
                     name: addOn.name,
-                    price: addOn.priceLabel,
-                    checked: selectedAddOns.includes(addOn.id),
-                    highlight: selectedAddOns.includes(addOn.id),
-                    tone: "success" as const,
+                    price: addOn.price,
+                    checked: true,
+                    highlight: index === 0,
                   }))}
                 />
-                <hr className="border-grey-150" />
-                <div className="flex items-center justify-between gap-4">
-                  <p className="flex items-center gap-2 text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
-                    <ChevronDownIcon className="shrink-0 text-ink" />
-                    Other Add-ons <span className="text-link">(0/{otherAddOnsCount})</span>
-                  </p>
-                  <p className="text-[14px] leading-none text-ink-muted">--</p>
-                </div>
-              </>
-            ) : null}
-
-            {variant === "anchor" && selectedAddOns.length > 0 ? (
-              <>
-                <hr className="border-grey-150" />
+              ) : (
                 <section className="flex flex-col gap-4">
                   <h4 className="text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
-                    Recommended Add-ons{" "}
-                    <span className="text-link">({selectedAddOns.length})</span>
+                    Previously Selected Add-ons{" "}
+                    <span className="text-info">({policy.previousAddOns.length})</span>
                   </h4>
                   <dl className="flex flex-col gap-4">
-                    {recommendedAddOns
-                      .filter((addOn) => selectedAddOns.includes(addOn.id))
-                      .map((addOn) => (
-                        <div
-                          key={addOn.id}
-                          className="flex items-center justify-between gap-4"
-                        >
-                          <dt className="text-[14px] leading-none tracking-[-0.07px] text-ink-secondary">
-                            {addOn.name}
-                          </dt>
-                          <dd className="ff-figures text-right text-[14px] leading-none font-medium tracking-[-0.14px] text-success">
-                            {addOn.priceLabel}
-                          </dd>
-                        </div>
-                      ))}
+                    {policy.previousAddOns.map((addOn) => (
+                      <AddOnRow key={addOn.name} {...addOn} />
+                    ))}
                   </dl>
                 </section>
+              )}
+
+              {collapsible ? (
+                <>
+                  <hr className="border-grey-150" />
+                  <BreakdownSection
+                    title="Recommended Add-ons"
+                    count={`${selectedAddOns.length}/${recommendedAddOns.length}`}
+                    rows={recommendedAddOns.map((addOn) => ({
+                      key: addOn.id,
+                      name: addOn.name,
+                      price: addOn.priceLabel,
+                      checked: selectedAddOns.includes(addOn.id),
+                      highlight: selectedAddOns.includes(addOn.id),
+                      tone: "success" as const,
+                    }))}
+                  />
+                  <hr className="border-grey-150" />
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="flex items-center gap-2 text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
+                      <ChevronDownIcon className="shrink-0 text-ink" />
+                      Other Add-ons <span className="text-link">(0/{otherAddOnsCount})</span>
+                    </p>
+                    <p className="text-[14px] leading-none text-ink-muted">--</p>
+                  </div>
+                </>
+              ) : null}
+
+              {variant === "anchor" && selectedAddOns.length > 0 ? (
+                <>
+                  <hr className="border-grey-150" />
+                  <section className="flex flex-col gap-4">
+                    <h4 className="text-[14px] leading-none font-medium tracking-[-0.14px] text-ink">
+                      Recommended Add-ons{" "}
+                      <span className="text-link">({selectedAddOns.length})</span>
+                    </h4>
+                    <dl className="flex flex-col gap-4">
+                      {recommendedAddOns
+                        .filter((addOn) => selectedAddOns.includes(addOn.id))
+                        .map((addOn) => (
+                          <div
+                            key={addOn.id}
+                            className="flex items-center justify-between gap-4"
+                          >
+                            <dt className="text-[14px] leading-none tracking-[-0.07px] text-ink-secondary">
+                              {addOn.name}
+                            </dt>
+                            <dd className="ff-figures text-right text-[14px] leading-none font-medium tracking-[-0.14px] text-success">
+                              {addOn.priceLabel}
+                            </dd>
+                          </div>
+                        ))}
+                    </dl>
+                  </section>
+                </>
+              ) : null}
               </>
-            ) : null}
+            )}
 
             <hr className="border-grey-150" />
 

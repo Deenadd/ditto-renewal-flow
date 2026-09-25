@@ -17,6 +17,7 @@ There are two renewal screens, both leading into the same journey:
 | --- | --- |
 | `/` | The eight Yes/No questions (node `63:2306` and its successors) |
 | `/v2` | **V2** — the policy shown as five editable checks (node `142:3114`), with the cover pickers from node `142:3692` |
+| `/v3` | **V3** — not drawn in Figma. The policy as a pre-filled order, one recommendation, and an itemised price beside everything that changes it |
 
 The menu beside the brand mark swaps between them from anywhere in the
 journey. It is a menu button rather than a `<select>` on purpose: choosing an
@@ -52,6 +53,7 @@ app/
   layout.tsx           Font wiring and document metadata
   page.tsx             The Yes/No review screen
   v2/page.tsx          The V2 renewal screen, same journey behind it
+  v3/page.tsx          The V3 renewal screen
 components/
   site-header.tsx      Nav bar; brand mark steps back, menu swaps version
   renewal-review.tsx   Client component holding all answer state
@@ -75,10 +77,16 @@ components/
   ui/version-menu.tsx  Menu button behind both version switchers
   v2/renewal-v2.tsx    The five checks, and the state behind them
   v2/cover-picker.tsx  Six cover controls and the verdict they share
+  v3/renewal-v3.tsx    The V3 screen: what carries over, extras, term
+  v3/cover-decision.tsx  The one recommendation, closing to a line once answered
+  v3/receipt.tsx       Itemised price and the pinned phone bar
+  ui/auto-height.tsx   Animates height to fit changing content
 lib/
   renewal-data.ts      All copy and figures from the design
   proposal-data.ts     Medical questions, steps and step notes
   v2-data.ts           V2 copy, cover stops and the verdict per stop
+  v3-data.ts           V3 pricing that adds up, add-on copy, state
+  quote-context.tsx    The first screen's price, carried through the journey
 public/brand/          Logo and insurer artwork exported from Figma
 public/loading/        Calculator animation for the loading screen
 public/anchor/         Banner and support artwork for the anchor screen
@@ -262,6 +270,59 @@ The card below all six changes its whole contents at once, so it blurs through
 the swap over 260ms rather than crossfading two readable copies of different
 text, and the control itself blurs through the same swap when the version
 changes. Both hold still under `prefers-reduced-motion`.
+
+## V3 (`/v3`)
+
+V3 was designed here rather than drawn in Figma, from a critique of V2. It
+keeps the brand, tokens and type scale, and changes the structure.
+
+**The idea:** a renewal is a pre-filled order you review, not a form you fill
+in. Renewing exactly as is takes one click. The page asks for one decision,
+offers a couple of optional extras, and keeps the price — itemised, adding up —
+next to everything that changes it.
+
+### What changed from V2, and why
+
+| # | V2 | V3 | Why |
+| --- | --- | --- | --- |
+| 1 | Five numbered sections of equal weight | One compact "What you're renewing" card, then the single recommendation, then extras | Numbered steps read as work you must do. Most people change nothing, so what carries over should be glanceable and the one real decision should stand out. |
+| 2 | Address and members each a full section with its own card grid | Two rows in one card, each with an inline Edit | They are confirmations. They get a line each, and open into a form only if you need one. |
+| 3 | The cover question, a picker, then a separate verdict card | One card: the argument first, then **Raise to ₹20 lakh** or **Keep ₹15 lakh** | The question really is "take the recommendation or not". Two buttons answer it; the card then closes to a line, so the page gets shorter as you go. |
+| 4 | Three locked add-ons shown with full paragraphs | One line, "Add-ons you keep" | They can't be changed, so their descriptions were ~300px of reading with nothing to act on. |
+| 5 | Instant Cover pre-ticked | Nothing pre-selected; every extra is **Add** | A paid add-on ticked by default is an opt-out upsell. The default is exactly today's policy at today's price. |
+| 6 | "This month, we've seen a 75% significant decrease in premium prices!" | "Deena and Priya have declared conditions this covers." | A reason about this family, from data already on the policy, beats a marketing line. |
+| 7 | Sidebar card whose lines did not add up to its total, and never moved | An itemised receipt: every line sums to the figure under it, and it updates as you choose | ₹24,750 + ₹6,600 is not ₹34,999. A price you can't reconcile is a price you don't trust. |
+| 8 | "Confirm & continue" at the foot of the page, with no price beside it | The action sits in the receipt, under the total it commits to, with what comes next | You never press a button without seeing what it costs, and "Next, a quick ID check, then payment" means no surprises. |
+| 9 | On a phone the price was at the end of a ~3,000px page | A bar pinned to the bottom with the total and Continue | Nobody choosing a cover on a phone could see what it cost. |
+| 10 | Policy-period prices that contradicted the premium (₹7,730 for one year of a ₹34,999 policy) | Derived from whatever the year costs: 7.5% off two years, 10% off three | The saving now tracks your choices and is true at every combination. |
+| 11 | Calculating screen, then a summary repeating the choices, then the steps | Straight to the steps left before payment | The receipt already is the summary. Making you review it twice was friction. |
+| 12 | Add-on copy swapped in two places | Rewritten to say what each one does | "Reduction in PED" carried Claim Shield's syringes-and-gloves line; "Unlimited Restoration" carried PED's waiting-period line. |
+| 13 | White on `#389bf5` buttons (2.93:1), green on green chips (3.53:1), grey micro-labels (1.99:1) | `primary-strong` (4.64:1), `success-strong` (4.84:1), secondary grey (6.31:1) | Same hues, stepped darker until text passes WCAG AA. Measured, not estimated. |
+| 14 | ~3,100px long | ~1,650px | The same decisions in about half the scroll. |
+
+### Behaviour
+
+- The receipt's total blurs in when it changes, with tabular figures so the
+  column never shifts, and a stable status region announces the new total.
+- The recommendation card animates its height as it closes (an accordion, the
+  one case where height is the right thing to animate), and moves focus to its
+  **Change** button so a keyboard user isn't dropped back at the top.
+- **Add** toggles cross-fade their plus and tick icons with the scale-and-blur
+  recipe, keep a fixed width so "Add" → "Added" never shifts the row, and carry
+  the state in words as well as colour.
+- **Undo all changes** appears only once there is something to undo.
+- Continuing carries the price, cover, term and itemised lines to every later
+  screen through a quote context, so the anchor screen, KYC and payment show
+  the figure you agreed to. V2 now uses the same context, which fixes the old
+  ₹34,999 reappearing after a cover change.
+
+### Fixed along the way
+
+- Text inputs render at 16px below `sm`, which stops iOS Safari zooming the page
+  whenever a field is focused. Desktop sizes are unchanged.
+- V2's card, list, table and compare pickers hid their radios for styling and
+  had no visible keyboard focus. Their labels now take a focus ring whenever
+  the radio inside them is focused.
 
 ## What "Yes" opens
 

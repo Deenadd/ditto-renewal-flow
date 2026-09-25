@@ -417,7 +417,7 @@ function AddOnRow({
   }
 
   return (
-    <label className="flex cursor-pointer items-start gap-3">
+    <label className="has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 flex cursor-pointer items-start gap-3">
       <input
         type="checkbox"
         checked={state === "on"}
@@ -525,7 +525,7 @@ function PeriodCheck({
         return (
           <label
             key={period.id}
-            className={`flex cursor-pointer items-start gap-3 rounded-2xl border bg-white px-4 py-3.5 shadow-card transition-colors duration-150 ${
+            className={`has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 flex cursor-pointer items-start gap-3 rounded-2xl border bg-white px-4 py-3.5 shadow-card transition-colors duration-150 ${
               on ? "border-primary" : "border-grey-150 hover:border-grey-200"
             }`}
           >

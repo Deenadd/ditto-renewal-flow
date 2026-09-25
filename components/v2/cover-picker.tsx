@@ -438,7 +438,7 @@ function CardsControl({ lakhs, onChange }: ControlProps) {
         return (
           <label
             key={stop.lakhs}
-            className={`flex cursor-pointer flex-col gap-3.5 rounded-xl border-2 p-3.5 shadow-card transition-[border-color,background-color,transform] duration-150 active:scale-[0.98] ${
+            className={`has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 flex cursor-pointer flex-col gap-3.5 rounded-xl border-2 p-3.5 shadow-card transition-[border-color,background-color,transform] duration-150 active:scale-[0.98] ${
               chosen ? zoneSurface[zone] : "border-grey-150 bg-white hover:border-grey-200"
             }`}
           >
@@ -599,7 +599,7 @@ function CompareControl({ lakhs, onChange }: ControlProps) {
       <legend className="sr-only">Cover amount</legend>
 
       <label
-        className={`flex cursor-pointer flex-col gap-3 rounded-2xl border-2 p-4 shadow-card transition-[border-color,background-color] duration-150 ${
+        className={`has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 flex cursor-pointer flex-col gap-3 rounded-2xl border-2 p-4 shadow-card transition-[border-color,background-color] duration-150 ${
           movedUp
             ? "border-grey-150 bg-white hover:border-grey-200"
             : zoneSurface.low
@@ -675,7 +675,7 @@ function CompareControl({ lakhs, onChange }: ControlProps) {
             return (
               <label
                 key={stop.lakhs}
-                className={`ff-figures flex h-8 cursor-pointer items-center rounded-lg border px-2.5 text-[14px] leading-none font-medium transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.96] ${
+                className={`has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 ff-figures flex h-8 cursor-pointer items-center rounded-lg border px-2.5 text-[14px] leading-none font-medium transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.96] ${
                   chosen
                     ? "border-transparent bg-ink text-white"
                     : "border-grey-200 bg-white text-ink hover:bg-grey-50"
@@ -719,7 +719,7 @@ function ListControl({ lakhs, onChange }: ControlProps) {
         return (
           <label
             key={stop.lakhs}
-            className={`flex cursor-pointer items-start gap-3 px-4 py-4 transition-colors duration-150 ${
+            className={`has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 flex cursor-pointer items-start gap-3 px-4 py-4 transition-colors duration-150 ${
               position > 0 ? "border-t border-grey-150" : ""
             } ${chosen ? zoneTint[zone] : "hover:bg-grey-50"}`}
           >
@@ -798,7 +798,7 @@ function TableControl({ lakhs, onChange }: ControlProps) {
                 return (
                   <th key={stop.lakhs} scope="col" className="p-0 align-bottom">
                     <label
-                      className={`flex cursor-pointer flex-col items-center gap-2 px-3 pt-4 pb-3 transition-colors duration-150 ${
+                      className={`has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 flex cursor-pointer flex-col items-center gap-2 px-3 pt-4 pb-3 transition-colors duration-150 ${
                         chosen ? zoneTint[zone] : "hover:bg-grey-50"
                       }`}
                     >

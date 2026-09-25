@@ -4,7 +4,7 @@ import { useId, type ReactNode } from "react";
 import { ChevronDownIcon } from "@/components/icons";
 
 const control =
-  "flex w-full items-center gap-2 rounded-lg border border-grey-200 bg-white px-3 text-[14px] leading-[1.15] font-semibold text-ink transition-shadow focus-within:border-2 focus-within:border-focus focus-within:px-[11px] focus-within:shadow-[0_0_0_2px_var(--color-focus-ring)]";
+  "flex w-full items-center gap-2 rounded-lg border border-grey-200 bg-white px-3 text-[16px] leading-[1.15] font-semibold text-ink transition-shadow sm:text-[14px] focus-within:border-2 focus-within:border-focus focus-within:px-[11px] focus-within:shadow-[0_0_0_2px_var(--color-focus-ring)]";
 
 function Label({
   htmlFor,
