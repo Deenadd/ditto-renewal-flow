@@ -145,7 +145,7 @@ export function VersionMenu({
           role="menu"
           aria-label={label}
           onKeyDown={onMenuKeyDown}
-          className={`absolute top-[calc(100%+6px)] z-40 w-[248px] max-w-[calc(100vw-32px)] min-w-full origin-top rounded-xl border border-grey-150 bg-white p-1 shadow-[0_8px_28px_-6px_rgb(30_37_75_/_0.14),0_2px_6px_-2px_rgb(30_37_75_/_0.08)] motion-safe:animate-menu ${
+          className={`absolute top-[calc(100%+6px)] z-40 max-h-[min(24rem,calc(100vh-7rem))] w-[248px] max-w-[calc(100vw-32px)] min-w-full origin-top overflow-y-auto overscroll-contain rounded-xl border border-grey-150 bg-white p-1 shadow-[0_8px_28px_-6px_rgb(30_37_75_/_0.14),0_2px_6px_-2px_rgb(30_37_75_/_0.08)] motion-safe:animate-menu ${
             align === "end" ? "left-0 lg:right-0 lg:left-auto" : "left-0"
           }`}
         >

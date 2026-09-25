@@ -74,7 +74,7 @@ components/
   ui/switch.tsx        Track-and-knob switch
   ui/version-menu.tsx  Menu button behind both version switchers
   v2/renewal-v2.tsx    The five checks, and the state behind them
-  v2/cover-picker.tsx  Three cover controls and the verdict they share
+  v2/cover-picker.tsx  Six cover controls and the verdict they share
 lib/
   renewal-data.ts      All copy and figures from the design
   proposal-data.ts     Medical questions, steps and step notes
@@ -245,20 +245,23 @@ the other two versions offer four amounts rather than five.
 The handle and fill move on `transform` over 200ms `cubic-bezier(0.23, 1, 0.32, 1)`,
 so dragging across stops retargets smoothly instead of restarting.
 
-#### Versions 2 and 3
+#### Versions 2 to 6
 
-Both are native form controls with the chrome drawn over them: radios in a
-fieldset for the cards, two buttons for the stepper, so neither needed a
-keyboard model written for it. The cards state the amount, the premium, what it
-adds over today's price, and which band it falls in; the stepper keeps the
-sense of position as a four-segment meter and says the difference as a monthly
-figure. Selection is never colour alone — a tick on the cards, a filled meter
-and a named band on the stepper.
+Every one is a native form control with the chrome drawn over it — a radio
+group in a fieldset for cards, compare, list and table, two buttons for the
+stepper — so none of them needed a keyboard model written by hand, and all of
+them answer to arrow keys. The table is a real `<table>`, so each figure is
+announced with the amount it belongs to; below `sm` it scrolls, and its
+trailing edge fades so it does not read as ending at the second column.
 
-The card below all three changes its whole contents at once, so it blurs
-through the swap over 260ms rather than crossfading two readable copies of
-different text, and the control itself blurs through the same swap when the
-version changes. Both hold still under `prefers-reduced-motion`.
+Selection is never colour alone: a tick on the cards, a filled ring on the list
+and table, a solid chip on compare, and a named band everywhere. Every amount
+also carries its band in words — "Not enough", "Recommended", "Extra room".
+
+The card below all six changes its whole contents at once, so it blurs through
+the swap over 260ms rather than crossfading two readable copies of different
+text, and the control itself blurs through the same swap when the version
+changes. Both hold still under `prefers-reduced-motion`.
 
 ## What "Yes" opens
 

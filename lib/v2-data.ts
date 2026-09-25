@@ -136,7 +136,13 @@ export const coverLegend = [
 ] as const;
 
 /** How each cover picker presents the same five stops. */
-export type CoverLayout = "slider" | "cards" | "stepper";
+export type CoverLayout =
+  | "slider"
+  | "cards"
+  | "stepper"
+  | "compare"
+  | "list"
+  | "table";
 
 export const coverLayoutOptions: {
   value: CoverLayout;
@@ -158,7 +164,33 @@ export const coverLayoutOptions: {
     label: "Version 3 · Stepper",
     hint: "One amount at a time, with what it costs a month.",
   },
+  {
+    value: "compare",
+    label: "Version 4 · Compare",
+    hint: "Keep what you have, or move up. Two panels, one decision.",
+  },
+  {
+    value: "list",
+    label: "Version 5 · List",
+    hint: "A row per amount, with a line on what it buys you.",
+  },
+  {
+    value: "table",
+    label: "Version 6 · Table",
+    hint: "All four side by side, figures aligned to compare.",
+  },
 ];
+
+/**
+ * One line on what each amount buys, for the pickers with room to say it.
+ * Only the amounts at or above the current cover, since the rest are closed.
+ */
+export const coverReasons: Record<number, string> = {
+  15: "What you carry today. One big claim uses up nearly half of it.",
+  20: "Back to what ₹15 lakh bought you in 2024.",
+  25: "Room for a second big claim in the same year.",
+  30: "Comfortable for four people in a metro, with room to spare.",
+};
 
 /** Which of the three treatments the chosen cover falls into. */
 export type CoverZone = "low" | "good" | "high";
