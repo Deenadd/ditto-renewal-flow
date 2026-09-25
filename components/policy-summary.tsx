@@ -143,29 +143,34 @@ export function PolicySummary({
   addedMember,
   pinCode,
   cover,
+  premium,
 }: {
   /**
    * "review"  the plain breakdown beside the questions
+   * "compact" the same breakdown alone, for V2, where the expiry notice and
+   *           the benefits already sit in the main column
    * "summary" plan row, green figures, collapsible sections with checkboxes
    * "anchor"  plan row and green figures, no deadline banner, no benefits card,
    *           and only the add-ons actually being bought
    */
-  variant?: "review" | "summary" | "anchor";
+  variant?: "review" | "compact" | "summary" | "anchor";
   selectedAddOns?: string[];
   /** Relationship of a member added this session, shown as a success badge. */
   addedMember?: string;
   /** Values the reviewer changed, so the card shows the policy they will buy. */
   pinCode?: string;
   cover?: string;
+  /** Re-priced premium, used for both the header figure and the total. */
+  premium?: string;
 } = {}) {
-  const detailed = variant !== "review";
+  const detailed = variant === "summary" || variant === "anchor";
   const collapsible = variant === "summary";
 
   return (
     <div className="flex flex-col gap-4">
-      {variant === "anchor" ? null : (
+      {variant === "review" || variant === "summary" ? (
         <RenewalDeadlineBanner className="hidden lg:flex" />
-      )}
+      ) : null}
 
       {/* Coverage details */}
       <div className="overflow-hidden rounded-2xl border border-grey-150 bg-white shadow-card">
@@ -247,7 +252,7 @@ export function PolicySummary({
                     detailed ? "text-success" : "text-ink"
                   }`}
                 >
-                  {policy.premium} /{" "}
+                  {premium ?? policy.premium} /{" "}
                   <span className="text-[16px] leading-none font-normal tracking-[0.16px] text-ink-faint">
                     {policy.premiumPeriod}
                   </span>
@@ -376,7 +381,7 @@ export function PolicySummary({
                 </span>
               </p>
               <p className="ff-figures text-right text-[14px] leading-5 font-medium text-ink">
-                {formatRupees(policy.totalPremium)}
+                {premium ?? formatRupees(policy.totalPremium)}
               </p>
             </div>
 
@@ -395,7 +400,7 @@ export function PolicySummary({
         </div>
       </div>
 
-      {detailed ? null : <PolicyDetailsCard />}
+      {variant === "review" ? <PolicyDetailsCard /> : null}
     </div>
   );
 }

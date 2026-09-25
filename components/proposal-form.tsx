@@ -279,7 +279,7 @@ function VersionToggle({
     >
       <span className="flex min-w-0 flex-col gap-1">
         <span className="text-[14px] leading-none font-semibold text-ink">
-          {stepped ? "Turn off v2 version" : "Turn on v2 version"}
+          {stepped ? "Turn off the step-by-step form" : "Turn on the step-by-step form"}
         </span>
         <span className="text-[13px] leading-[1.5] text-ink-secondary">
           {stepped
@@ -565,7 +565,7 @@ export function ProposalFormScreen({
               We need to know few details to get you started on your customised plan
             </p>
 
-            {/* v2 tab bar */}
+            {/* Step-by-step tab bar */}
             {stepped ? (
               <ol className="mt-6 flex gap-4">
                 {steps.map((id, i) => {

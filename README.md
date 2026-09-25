@@ -11,6 +11,13 @@ policy and premium summary alongside.
 Every question is phrased so that **Yes** means something has changed, and
 answering Yes opens the matching follow-up beneath it.
 
+There are two renewal screens, both leading into the same journey:
+
+| Route | Screen |
+| --- | --- |
+| `/` | The eight Yes/No questions (node `63:2306` and its successors) |
+| `/v2` | **V2** — the policy shown as five editable checks (node `142:3114`), with the cover slider from node `142:3692` |
+
 ## Stack
 
 | Piece | Choice |
@@ -38,7 +45,8 @@ Other scripts: `npm run build`, `npm run start`, `npm run lint`.
 app/
   globals.css          Design tokens (colours, shadow, type helpers) + separators
   layout.tsx           Font wiring and document metadata
-  page.tsx             Composes the header and the review screen
+  page.tsx             The Yes/No review screen
+  v2/page.tsx          The V2 renewal screen, same journey behind it
 components/
   site-header.tsx      Nav bar; the brand mark steps back through the journey
   renewal-review.tsx   Client component holding all answer state
@@ -139,6 +147,77 @@ Spacing, type, colour and line breaks match. Decisions worth knowing:
     step, which is what the other three frames do.
 23. **Payment redirect.** The payment step opens the same insurer redirect
     dialog the KYC step uses. No frame specifies a payment gateway.
+24. **V2 member cards.** The frame labels Priya "42 · Son" and Aarav
+    "45 · self", repeating the proposer's own age and relationship. The build
+    uses the ages and relationships the sidebar card carries: you 45, spouse 42,
+    son 12, daughter 10.
+25. **V2 cover pricing.** The card heads the slider with ₹34,999/yr, but the
+    explanation below it prints "₹31,043 to ₹36,473" for the same change. The
+    build keeps ₹34,999 — the figure the sidebar and the rest of the journey
+    use — and derives each stop from the frame's own "+₹450 / month", so the
+    screen tells one story.
+26. **V2 cover copy above the recommendation.** The ₹25L frame repeats the ₹20L
+    wording verbatim, still naming ₹20 lakh throughout. The build fills the
+    figures in from the stop in play, which also gives ₹30L a card the frame
+    never drew.
+27. **V2 slider handle travel.** The frame's handle runs between the centres of
+    the first and last tick labels, about 17px inside each end of the track. The
+    build runs it the full width of the track, so ₹10L and ₹30L sit at the ends.
+    The ₹20L and ₹25L marks land within 2px of the frame either way.
+28. **V2 "More options".** The frame draws it as a heading with nothing under
+    it. The build makes it a disclosure onto the three add-ons the picked group
+    leaves out.
+29. **V2 Confirm & continue.** The frame draws it disabled. Renewing without
+    changing anything is the point of the screen, so the build keeps it enabled
+    and instead hides "Clear all changes" until there is something to clear.
+30. **V2 policy period cards.** All three repeat the Instant Cover description
+    and the frame orders them 1, 3, 2 Year. The build keeps the wording and the
+    ascending order already used on the summary screen, which makes the cards
+    shorter than the frame draws them.
+
+## V2 (`/v2`)
+
+Node `142:3114`. The same renewal, asked differently: no Yes/No radios at all.
+Each of five checks shows what the policy carries today and lets you change it
+in place, under a three-step progress bar and an amber notice counting down to
+the expiry date.
+
+| # | Check | What it does |
+| --- | --- | --- |
+| 1 | Where you live | **Edit** swaps the address line for address, pin code and city fields |
+| 2 | Who is covered | A card per member, a dashed **Add Person** tile that opens a name/age/relationship form, and a remove control on everyone but the proposer |
+| 3 | Cover amount | The slider below |
+| 4 | Add-ons | Three groups: already on the policy (locked, blue ticks), picked for your family (green ticks), and **More options** |
+| 5 | Policy period | One, two or three years, with the saving each longer term buys |
+
+**Confirm & continue** folds the screen down into the same answers the Yes/No
+version produces, so the premium calculation, summary, KYC, proposal form and
+payment steps that follow are the journey already built. Stepping back with the
+brand mark finds the screen exactly as it was left.
+
+### The cover slider
+
+Nodes `142:3693`, `142:3789` and `142:3883` draw the slider at ₹15L, ₹20L and
+₹25L. The track carries the advice rather than just the value: it is yellow up
+to the ₹20L recommendation and green past it, and the blue fill covers whichever
+of those the chosen amount has already reached. Three things then move together:
+
+| Cover | Handle | Tick | Card below |
+| --- | --- | --- | --- |
+| Below ₹20L | Blue ring, grip mark | Blue | Peach — "₹15 lakh is not enough anymore" |
+| ₹20L | Green ring, shield, standing in for the recommendation marker | Green | Green — "Good choice…" |
+| Above ₹20L | Purple ring, shield | Purple | Lilac — "…gives you extra room" |
+
+It is a real `<input type="range">` under a drawn track, so arrow keys, Home and
+End, click-to-position and drag all work, and the value is announced as
+"₹20 lakh, ₹40,429 a year, recommended for your family". ₹10L is drawn greyed
+and is out of range, because cover does not drop at renewal.
+
+The handle and fill move on `transform` over 200ms `cubic-bezier(0.23, 1, 0.32, 1)`,
+so dragging across stops retargets smoothly instead of restarting. The card
+below changes its whole contents at once, so it blurs through the swap over
+260ms rather than crossfading two readable copies of different text — and holds
+still under `prefers-reduced-motion`.
 
 ## What "Yes" opens
 
@@ -231,12 +310,14 @@ leaving payment and issuance, as node `123:12651` draws it.
 The health questions are asked about whoever was just added, since that is the
 person the insurer has no history for.
 
-### Two versions
+### Two layouts
 
-The sidebar carries a **Turn on v2 version** switch. v1 is the whole form on one
-page with the sidebar tracker following whatever is on screen. v2 takes it one
-step at a time behind a tab bar, with Next step between steps and Confirm and
-submit on the last (nodes `123:11849` to `123:12025`).
+The sidebar carries a **Turn on the step-by-step form** switch. Off, the form is
+one page with the sidebar tracker following whatever is on screen. On, it runs
+one step at a time behind a tab bar, with Next step between steps and Confirm
+and submit on the last (nodes `123:11849` to `123:12025`). The switch was
+labelled "v2" while that was the only second version in the prototype; it is
+named for what it does now that `/v2` is a screen of its own.
 
 Either way, each member gets an accordion with a live count of what is still
 unanswered, and in Medical History 2 a "Yes" opens six fields for the diagnosis
@@ -273,3 +354,11 @@ Native radio inputs give arrow-key navigation, the conditions table uses real
 table semantics with scoped headers, the scrollable table is keyboard
 reachable, answer progress is announced through a live region, and focus rings
 are visible throughout.
+
+On V2 the cover slider is a native range input, so it comes with the full
+keyboard model for free; the drawn handle picks up the focus ring from it, the
+chosen cover is announced through `aria-valuetext`, and the verdict is repeated
+in a polite live region. Every zone is marked by a shape as well as a colour —
+grip versus shield on the handle — so the advice does not rest on colour alone.
+The progress bar is an ordered list with `aria-current="step"` rather than tabs,
+since steps 2 and 3 are not somewhere you can go yet.

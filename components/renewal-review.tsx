@@ -13,6 +13,12 @@ import {
   type ProposalState,
 } from "@/components/proposal-form";
 import { ProposalSummaryScreen } from "@/components/proposal-summary";
+import {
+  RenewalV2,
+  initialV2State,
+  v2Changes,
+  type V2State,
+} from "@/components/v2/renewal-v2";
 import { RenewalSummary, type SummaryLine } from "@/components/renewal-summary";
 import { Question } from "@/components/question";
 import { ConditionsTable } from "@/components/conditions-table";
@@ -81,7 +87,12 @@ const defaultNominees = nomineeCandidates
   .filter((candidate) => candidate.current)
   .map((candidate) => candidate.id);
 
-export function RenewalReview() {
+/**
+ * `variant` picks the first screen. "v1" asks the eight Yes/No questions;
+ * "v2" (node 142:3114) shows the policy as five editable checks. Everything
+ * from the premium calculation onwards is the same journey either way.
+ */
+export function RenewalReview({ variant = "v1" }: { variant?: "v1" | "v2" } = {}) {
   const [answers, setAnswers] = useState<Answers>({});
   const [pinCode, setPinCode] = useState("");
   const [member, setMember] = useState<NewMember>(defaultMember);
@@ -95,9 +106,13 @@ export function RenewalReview() {
   const [history, setHistory] = useState<Status[]>([]);
   /** Which issuance step is in play. */
   const [journeyStep, setJourneyStep] = useState<IssuanceStepId>("kyc");
-  /** v2 runs the proposal one step at a time. */
+  /** Whether the proposal form runs one step at a time. */
   const [steppedForm, setSteppedForm] = useState(false);
   const [proposal, setProposal] = useState<ProposalState>(emptyProposal);
+  /** V2 holds its screen here so stepping back finds it as it was left. */
+  const [v2State, setV2State] = useState<V2State>(initialV2State);
+  /** Cover picked on the V2 slider, which runs past the three v1 tiers. */
+  const [coverLakhs, setCoverLakhs] = useState<number | null>(null);
 
   const answeredCount = useMemo(
     () => questions.filter((question) => answers[question.id]).length,
@@ -134,8 +149,9 @@ export function RenewalReview() {
   /** One confirmation line per question, worded from the answer given. */
   const summaryLines: SummaryLine[] = useMemo(() => {
     const changed = (id: QuestionId) => answers[id] === "yes";
-    const coverLabel =
-      coverOptions.find((option) => option.id === cover)?.amount ?? "₹15L";
+    const coverLabel = coverLakhs
+      ? `₹${coverLakhs}L`
+      : (coverOptions.find((option) => option.id === cover)?.amount ?? "₹15L");
 
     return [
       {
@@ -197,7 +213,7 @@ export function RenewalReview() {
           : "Same nominee, Sneha Kumari, spouse",
       },
     ];
-  }, [answers, pinCode, contact.phone, member.fullName, cover, bankForm.bankName, nominees, addOns]);
+  }, [answers, pinCode, contact.phone, member.fullName, cover, coverLakhs, bankForm.bankName, nominees, addOns]);
 
   function answer(id: QuestionId, value: Answer) {
     setAnswers((previous) => ({ ...previous, [id]: value }));
@@ -348,10 +364,41 @@ export function RenewalReview() {
     answers.location === "yes" && pinCode.length === 6
       ? `${pinCode}, Chennai`
       : undefined;
-  const coverLabel =
-    answers.cover === "yes"
+  const coverLabel = coverLakhs
+    ? `₹${coverLakhs} Lakhs`
+    : answers.cover === "yes"
       ? coverOptions.find((option) => option.id === cover)?.sidebarLabel
       : undefined;
+
+  /** Fold the V2 screen down into the answers the rest of the journey reads. */
+  function confirmV2() {
+    const touched = v2Changes(v2State);
+    setAnswers({
+      location: touched.address ? "yes" : "no",
+      contact: "no",
+      members: touched.members ? "yes" : "no",
+      cover: touched.cover ? "yes" : "no",
+      "add-ons": touched.addOns ? "yes" : "no",
+      conditions: "no",
+      "refund-account": "no",
+      nominee: "no",
+    });
+    setPinCode(v2State.address.pinCode);
+    const [first] = v2State.added;
+    setMember(
+      first
+        ? {
+            fullName: first.name,
+            relationship: first.relation,
+            dateOfBirth: "",
+            hasConditions: null,
+          }
+        : defaultMember,
+    );
+    setCoverLakhs(touched.cover ? v2State.lakhs : null);
+    setAddOns({ selected: v2State.addOns, terms: {} });
+    goTo("calculating");
+  }
 
   /**
    * What hangs off each question. Some blocks are always on the page, others
@@ -397,6 +444,16 @@ export function RenewalReview() {
 
   /** The screen for the state the journey is in. */
   function screen() {
+    if (variant === "v2" && status === "review") {
+      return (
+        <RenewalV2
+          value={v2State}
+          onChange={setV2State}
+          onConfirm={confirmV2}
+        />
+      );
+    }
+
     if (status === "calculating") {
       return <CalculatingPremium />;
     }

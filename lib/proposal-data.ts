@@ -186,7 +186,7 @@ export const proposalStepMeta: Record<
   },
 };
 
-/** The note that sits beside the step in play in the v2 sidebar. */
+/** The note beside the step in play, in the step-by-step sidebar. */
 export const proposalStepNotes: Record<
   ProposalStepId,
   { title: string; body: string; points?: string[]; art?: string }
