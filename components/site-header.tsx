@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { LifeBuoyIcon } from "@/components/icons";
 import { VersionMenu } from "@/components/ui/version-menu";
 
-/** The renewal screens, and where each one lives. */
+/** The two renewal screens, and where each one lives. */
 const versions = [
   {
     value: "v1",
@@ -20,12 +20,6 @@ const versions = [
     hint: "Five checks you edit in place.",
     href: "/v2",
   },
-  {
-    value: "v3",
-    label: "Version 3",
-    hint: "Ready to renew as is, one recommendation, price alongside.",
-    href: "/v3",
-  },
 ];
 
 /**
@@ -33,15 +27,15 @@ const versions = [
  * brand mark and support action aligned to the page content gutters.
  *
  * The brand mark steps back through the journey when there is somewhere to go,
- * and is inert on the first screen. Beside it, a menu swaps between the three
- * renewal screens; all of them lead into the same issuance journey.
+ * and is inert on the first screen. Beside it, a menu swaps between the two
+ * renewal screens; both lead into the same issuance journey.
  */
 export function SiteHeader({
   onBack,
   version = "v1",
 }: {
   onBack?: () => void;
-  version?: "v1" | "v2" | "v3";
+  version?: "v1" | "v2";
 }) {
   const router = useRouter();
 

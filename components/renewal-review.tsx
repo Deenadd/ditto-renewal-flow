@@ -19,17 +19,8 @@ import {
   v2Changes,
   type V2State,
 } from "@/components/v2/renewal-v2";
-import { RenewalV3 } from "@/components/v3/renewal-v3";
 import { QuoteContext, type Quote } from "@/lib/quote-context";
 import { premiumFor } from "@/lib/v2-data";
-import {
-  initialV3State,
-  priceV3,
-  rupees,
-  v3Changes,
-  yearsLabel,
-  type V3State,
-} from "@/lib/v3-data";
 import { RenewalSummary, type SummaryLine } from "@/components/renewal-summary";
 import { Question } from "@/components/question";
 import { ConditionsTable } from "@/components/conditions-table";
@@ -59,6 +50,7 @@ import {
   coveredMembers,
   nomineeCandidates,
   defaultCoverId,
+  formatRupees,
   recommendedAddOns,
   questions,
   type IssuanceStepId,
@@ -100,13 +92,10 @@ const defaultNominees = nomineeCandidates
 
 /**
  * `variant` picks the first screen. "v1" asks the eight Yes/No questions;
- * "v2" (node 142:3114) shows the policy as five editable checks; "v3" is the
- * policy as a pre-filled order with its price alongside. Everything after the
- * first screen is the same journey either way.
+ * "v2" (node 142:3114) shows the policy as five editable checks. Everything
+ * from the premium calculation onwards is the same journey either way.
  */
-export function RenewalReview({
-  variant = "v1",
-}: { variant?: "v1" | "v2" | "v3" } = {}) {
+export function RenewalReview({ variant = "v1" }: { variant?: "v1" | "v2" } = {}) {
   const [answers, setAnswers] = useState<Answers>({});
   const [pinCode, setPinCode] = useState("");
   const [member, setMember] = useState<NewMember>(defaultMember);
@@ -127,7 +116,6 @@ export function RenewalReview({
   const [v2State, setV2State] = useState<V2State>(initialV2State);
   /** Cover picked on the V2 slider, which runs past the three v1 tiers. */
   const [coverLakhs, setCoverLakhs] = useState<number | null>(null);
-  const [v3State, setV3State] = useState<V3State>(initialV3State);
   /** The price worked out on the first screen, carried to every screen after. */
   const [quote, setQuote] = useState<Quote | null>(null);
 
@@ -418,69 +406,11 @@ export function RenewalReview({
       touched.cover
         ? {
             cover: `₹${v2State.lakhs} Lakhs`,
-            premium: rupees(premiumFor(v2State.lakhs)),
+            premium: formatRupees(premiumFor(v2State.lakhs)),
           }
         : null,
     );
     goTo("calculating");
-  }
-
-  /**
-   * V3 already shows the price and every change in its receipt, so it skips
-   * the calculating screen and the change summary, and goes straight to the
-   * steps left before payment.
-   */
-  function confirmV3() {
-    const touched = v3Changes(v3State);
-    const priced = priceV3(v3State);
-    const needsCheck =
-      touched.address || touched.members || touched.cover || touched.addOns;
-
-    setAnswers({
-      location: touched.address ? "yes" : "no",
-      contact: "no",
-      members: touched.members ? "yes" : "no",
-      cover: touched.cover ? "yes" : "no",
-      "add-ons": touched.addOns ? "yes" : "no",
-      conditions: "no",
-      "refund-account": "no",
-      nominee: "no",
-    });
-    setPinCode(v3State.address.pinCode);
-    const [first] = v3State.added;
-    setMember(
-      first
-        ? {
-            fullName: first.name,
-            relationship: first.relation,
-            dateOfBirth: "",
-            hasConditions: null,
-          }
-        : defaultMember,
-    );
-    setCoverLakhs(touched.cover ? v3State.lakhs : null);
-    setAddOns({ selected: v3State.addOns, terms: {} });
-    setQuote({
-      cover: `₹${v3State.lakhs} Lakhs`,
-      premium: rupees(priced.total),
-      term: yearsLabel(priced.years),
-      breakdown: [
-        ...priced.lines.map((line) => ({
-          label: line.label,
-          value: rupees(line.value),
-        })),
-        ...(priced.years > 1
-          ? [
-              {
-                label: `${yearsLabel(priced.years)}, multi-year discount`,
-                value: `−${rupees(priced.saving)}`,
-              },
-            ]
-          : []),
-      ],
-    });
-    setJourneyStep(needsCheck ? "kyc" : "payment");
-    goTo("anchor");
   }
 
   /**
@@ -527,16 +457,6 @@ export function RenewalReview({
 
   /** The screen for the state the journey is in. */
   function screen() {
-    if (variant === "v3" && status === "review") {
-      return (
-        <RenewalV3
-          value={v3State}
-          onChange={setV3State}
-          onConfirm={confirmV3}
-        />
-      );
-    }
-
     if (variant === "v2" && status === "review") {
       return (
         <RenewalV2

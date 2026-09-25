@@ -28,7 +28,7 @@ export function PolicyBar({ cover }: { cover?: string }) {
         </p>
         <p className="ff-figures text-[12px] leading-none tracking-[0.06px] text-ink-secondary">
           Cover: {amount} <span className="text-grey-200">•</span> Premium:{" "}
-          {quote?.premium ?? policy.premium} / {quote?.term ?? policy.premiumPeriod}
+          {quote?.premium ?? policy.premium} / {policy.premiumPeriod}
         </p>
       </div>
       <ChevronDownIcon className="shrink-0 text-ink-secondary" size={20} />

@@ -102,19 +102,6 @@
   --color-extra-bg: #fbefff;
   --shadow-thumb: 0 2px 4px 0 rgb(0 0 0 / 0.1);
 
-  /* V3. Same hues as the tokens above, stepped darker until text on them
-     passes WCAG AA (4.5:1), measured against the surface each renders on:
-       white on primary-strong           4.64   (primary itself: 2.93)
-       success-strong on green-100       4.84   (success itself: 3.53)
-       success-strong on white           5.29                           */
-  --color-primary-strong: #0b75d6;
-  --color-primary-strong-hover: #0a6ac2;
-  --color-success-strong: #347947;
-  /* Receipt and bottom bar sit above the page, so they carry real depth. */
-  --shadow-float:
-    0 12px 32px -12px rgb(30 37 75 / 0.18),
-    0 2px 6px -2px rgb(30 37 75 / 0.08);
-
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
