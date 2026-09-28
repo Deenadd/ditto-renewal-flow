@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { CheckMarkIcon, MinusIcon, PlusIcon } from "@/components/icons";
+import { useCoverBaseline } from "@/components/v2/cover-baseline";
 import { CoverReasons } from "@/components/v2/cover-reasons";
 import {
-  CURRENT_LAKHS,
   RECOMMENDED_LAKHS,
   coverLegend,
-  coverReasons,
+  coverReasonFor,
   coverStops,
   deltaFor,
+  noteFor,
   premiumFor,
   verdictFor,
   zoneFor,
@@ -28,8 +29,6 @@ function pct(lakhs: number) {
 }
 
 const RECO_PCT = pct(RECOMMENDED_LAKHS);
-/** The stops the reviewer can reach. Cover never drops at renewal. */
-const reachable = coverStops.filter((stop) => stop.lakhs >= CURRENT_LAKHS);
 
 const zoneText: Record<CoverZone, string> = {
   low: "text-primary",
@@ -137,6 +136,7 @@ type ControlProps = {
  * band they land in, so the same message arrives three ways.
  */
 function SliderControl({ lakhs, onChange }: ControlProps) {
+  const { current, reachable } = useCoverBaseline();
   const zone = zoneFor(lakhs);
   const index = reachable.findIndex((stop) => stop.lakhs === lakhs);
   const premium = premiumFor(lakhs);
@@ -146,8 +146,10 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
     <div className="rounded-2xl border border-grey-150 bg-white p-5 shadow-card">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-4">
+          {/* "Current" only while it is: a pre-selected or moved amount is a
+              new cover, not the one on the policy. */}
           <p className="ff-case text-[11px] leading-none font-medium tracking-[0.55px] text-ink-muted uppercase">
-            Current cover
+            {lakhs === current ? "Current cover" : "New cover"}
           </p>
           <p className="ff-figures text-[24px] leading-[1.3] font-semibold tracking-[-0.3px] text-ink">
             ₹{lakhs} Lakhs
@@ -159,7 +161,7 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
           </p>
           <p
             className={`ff-figures text-[24px] leading-[1.3] font-semibold tracking-[-0.3px] transition-colors duration-200 ${
-              lakhs === CURRENT_LAKHS ? "text-ink" : zoneText[zone]
+              lakhs === current ? "text-ink" : zoneText[zone]
             }`}
           >
             {rupees(premium)}/yr
@@ -221,7 +223,7 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
             aria-valuetext={`₹${lakhs} lakh, ${rupees(premium)} a year${
               onRecommended ? ", recommended for your family" : ""
             }`}
-            style={{ left: `${pct(CURRENT_LAKHS)}%` }}
+            style={{ left: `${pct(current)}%` }}
             className="peer absolute top-1/2 right-0 h-10 -translate-y-1/2 cursor-pointer appearance-none bg-transparent focus:outline-none [&::-moz-range-thumb]:h-10 [&::-moz-range-thumb]:w-0 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-transparent [&::-webkit-slider-thumb]:h-10 [&::-webkit-slider-thumb]:w-0 [&::-webkit-slider-thumb]:appearance-none"
           />
 
@@ -241,7 +243,7 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
             const active = stop.lakhs === lakhs;
             const reached =
               stop.lakhs === RECOMMENDED_LAKHS && lakhs >= RECOMMENDED_LAKHS;
-            const locked = stop.lakhs < CURRENT_LAKHS;
+            const locked = stop.lakhs < current;
 
             return (
               <span
@@ -267,23 +269,24 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
             narrow screens where they would collide instead of being
             shrunk past reading size. */}
         <div className="relative mt-[7px] hidden h-5 sm:block">
-          {coverStops.map((stop) =>
-            stop.note ? (
+          {coverStops.map((stop) => {
+            const note = noteFor(stop.lakhs, current);
+            return note ? (
               <span
                 key={stop.lakhs}
                 style={{ left: `${pct(stop.lakhs)}%` }}
                 className={`absolute top-0 -translate-x-1/2 text-[14px] leading-5 whitespace-nowrap ${
-                  stop.lakhs === RECOMMENDED_LAKHS
-                    ? "text-success"
-                    : stop.lakhs > RECOMMENDED_LAKHS
-                      ? "text-extra"
-                      : "text-ink-secondary"
+                  stop.lakhs === current
+                    ? "text-ink-secondary"
+                    : stop.lakhs === RECOMMENDED_LAKHS
+                      ? "text-success"
+                      : "text-extra"
                 }`}
               >
-                {stop.note}
+                {note}
               </span>
-            ) : null,
-          )}
+            ) : null;
+          })}
         </div>
       </div>
 
@@ -376,13 +379,14 @@ function StepButton({
  * ₹25 lakh costs, and these four cards just say it.
  */
 function CardsControl({ lakhs, onChange }: ControlProps) {
+  const { current, reachable } = useCoverBaseline();
   return (
     <fieldset className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <legend className="sr-only">Cover amount</legend>
       {reachable.map((stop) => {
         const zone = zoneFor(stop.lakhs);
         const chosen = stop.lakhs === lakhs;
-        const delta = deltaFor(stop.lakhs);
+        const delta = deltaFor(stop.lakhs, current);
 
         return (
           <label
@@ -450,9 +454,10 @@ function CardsControl({ lakhs, onChange }: ControlProps) {
  * without asking anyone to drag anything.
  */
 function StepperControl({ lakhs, onChange }: ControlProps) {
+  const { current, reachable } = useCoverBaseline();
   const zone = zoneFor(lakhs);
   const index = reachable.findIndex((stop) => stop.lakhs === lakhs);
-  const delta = deltaFor(lakhs);
+  const delta = deltaFor(lakhs, current);
   const step = (by: number) => onChange(reachable[index + by].lakhs);
 
   return (
@@ -489,7 +494,7 @@ function StepperControl({ lakhs, onChange }: ControlProps) {
           </p>
           <p
             className={`ff-figures flex h-9 items-center text-[26px] leading-none font-semibold tracking-[-0.4px] transition-colors duration-200 ${
-              lakhs === CURRENT_LAKHS ? "text-ink" : zoneText[zone]
+              lakhs === current ? "text-ink" : zoneText[zone]
             }`}
           >
             {rupees(premiumFor(lakhs))}/yr
@@ -535,13 +540,17 @@ function StepperControl({ lakhs, onChange }: ControlProps) {
  * up to becomes the smaller question inside it.
  */
 function CompareControl({ lakhs, onChange }: ControlProps) {
-  const upgrades = reachable.filter((stop) => stop.lakhs > CURRENT_LAKHS);
-  /* Which upgrade the right panel offers while the left one is chosen. */
-  const [pendingUp, setPendingUp] = useState(RECOMMENDED_LAKHS);
-  const upTo = lakhs > CURRENT_LAKHS ? lakhs : pendingUp;
-  const movedUp = lakhs > CURRENT_LAKHS;
+  const { current, reachable } = useCoverBaseline();
+  const upgrades = reachable.filter((stop) => stop.lakhs > current);
+  /* Which upgrade the right panel offers while the left one is chosen: the
+     recommendation if it's above today, otherwise the next amount up. */
+  const [pendingUp, setPendingUp] = useState(
+    () => upgrades[0]?.lakhs ?? RECOMMENDED_LAKHS,
+  );
+  const upTo = lakhs > current ? lakhs : pendingUp;
+  const movedUp = lakhs > current;
   const upZone = zoneFor(upTo);
-  const delta = deltaFor(upTo);
+  const delta = deltaFor(upTo, current);
 
   return (
     <fieldset className="grid gap-3 sm:grid-cols-2">
@@ -558,8 +567,8 @@ function CompareControl({ lakhs, onChange }: ControlProps) {
           type="radio"
           name="cover-amount"
           checked={!movedUp}
-          onChange={() => onChange(CURRENT_LAKHS)}
-          aria-label={`Keep ₹${CURRENT_LAKHS} lakh, ${rupees(premiumFor(CURRENT_LAKHS))} a year`}
+          onChange={() => onChange(current)}
+          aria-label={`Keep ₹${current} lakh, ${rupees(premiumFor(current))} a year`}
           className="sr-only"
         />
         <span className="ff-case block text-[11px] leading-none font-medium tracking-[0.55px] text-ink-muted uppercase">
@@ -568,16 +577,16 @@ function CompareControl({ lakhs, onChange }: ControlProps) {
         <span className="block">
           <span className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
             <span className="ff-figures text-[24px] leading-[1.3] font-semibold tracking-[-0.3px] text-ink">
-              ₹{CURRENT_LAKHS} Lakhs
+              ₹{current} Lakhs
             </span>
-            <ZoneChip lakhs={CURRENT_LAKHS} />
+            <ZoneChip lakhs={current} />
           </span>
           <span className="ff-figures mt-1.5 block text-[15px] leading-none text-ink-secondary">
-            {rupees(premiumFor(CURRENT_LAKHS))}/yr
+            {rupees(premiumFor(current))}/yr
           </span>
         </span>
         <span className="block text-[14px] leading-5 text-ink-secondary">
-          {coverReasons[CURRENT_LAKHS]}
+          {coverReasonFor(current, current)}
         </span>
         <span className="mt-auto flex flex-wrap items-center gap-2 pt-1">
           <span
@@ -587,7 +596,7 @@ function CompareControl({ lakhs, onChange }: ControlProps) {
                 : "border-transparent bg-ink text-white"
             }`}
           >
-            Keep ₹{CURRENT_LAKHS}L
+            Keep ₹{current}L
           </span>
         </span>
       </label>
@@ -615,7 +624,7 @@ function CompareControl({ lakhs, onChange }: ControlProps) {
           </span>
         </span>
         <span className="block text-[14px] leading-5 text-ink-secondary">
-          {coverReasons[upTo]}
+          {coverReasonFor(upTo, current)}
         </span>
 
         <span className="mt-auto flex flex-wrap items-center gap-2 pt-1">
@@ -657,13 +666,14 @@ function CompareControl({ lakhs, onChange }: ControlProps) {
  * layout a phone wants anyway.
  */
 function ListControl({ lakhs, onChange }: ControlProps) {
+  const { current, reachable } = useCoverBaseline();
   return (
     <fieldset className="overflow-hidden rounded-2xl border border-grey-150 bg-white shadow-card">
       <legend className="sr-only">Cover amount</legend>
       {reachable.map((stop, position) => {
         const zone = zoneFor(stop.lakhs);
         const chosen = stop.lakhs === lakhs;
-        const delta = deltaFor(stop.lakhs);
+        const delta = deltaFor(stop.lakhs, current);
 
         return (
           <label
@@ -690,7 +700,7 @@ function ListControl({ lakhs, onChange }: ControlProps) {
                 <ZoneChip lakhs={stop.lakhs} />
               </span>
               <span className="mt-1.5 block text-[14px] leading-5 text-ink-secondary">
-                {coverReasons[stop.lakhs]}
+                {coverReasonFor(stop.lakhs, current)}
               </span>
             </span>
 
@@ -722,6 +732,7 @@ function ListControl({ lakhs, onChange }: ControlProps) {
  * separate cards held in your head.
  */
 function TableControl({ lakhs, onChange }: ControlProps) {
+  const { current, reachable } = useCoverBaseline();
   const cell = "px-3 py-3 text-center transition-colors duration-150";
 
   return (
@@ -800,7 +811,7 @@ function TableControl({ lakhs, onChange }: ControlProps) {
                 A month more
               </th>
               {reachable.map((stop) => {
-                const delta = deltaFor(stop.lakhs);
+                const delta = deltaFor(stop.lakhs, current);
                 return (
                   <td
                     key={stop.lakhs}
@@ -876,6 +887,7 @@ export function CoverPicker({
   onReasonLayoutChange: (layout: ReasonLayout) => void;
 }) {
   const Control = controls[layout];
+  const { current } = useCoverBaseline();
 
   return (
     <div>
@@ -892,7 +904,7 @@ export function CoverPicker({
       />
 
       <p aria-live="polite" className="sr-only">
-        Cover set to ₹{lakhs} lakh. {verdictFor(lakhs).title}
+        Cover set to ₹{lakhs} lakh. {verdictFor(lakhs, current).title}
       </p>
     </div>
   );

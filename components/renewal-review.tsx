@@ -15,12 +15,16 @@ import {
 import { ProposalSummaryScreen } from "@/components/proposal-summary";
 import {
   RenewalV2,
-  initialV2State,
+  initialV2StateFor,
   v2Changes,
   type V2State,
 } from "@/components/v2/renewal-v2";
 import { QuoteContext, type Quote } from "@/lib/quote-context";
-import { premiumFor } from "@/lib/v2-data";
+import {
+  coverScenarios,
+  premiumFor,
+  type CoverScenario,
+} from "@/lib/v2-data";
 import { RenewalSummary, type SummaryLine } from "@/components/renewal-summary";
 import { Question } from "@/components/question";
 import { ConditionsTable } from "@/components/conditions-table";
@@ -95,7 +99,16 @@ const defaultNominees = nomineeCandidates
  * "v2" (node 142:3114) shows the policy as five editable checks. Everything
  * from the premium calculation onwards is the same journey either way.
  */
-export function RenewalReview({ variant = "v1" }: { variant?: "v1" | "v2" } = {}) {
+export function RenewalReview({
+  variant = "v1",
+  scenario = "below",
+}: {
+  variant?: "v1" | "v2";
+  /** V2 only: where the cover starts. See `coverScenarios`. */
+  scenario?: CoverScenario;
+} = {}) {
+  /** The cover the policy carries today, which V2's scenarios can move. */
+  const baseLakhs = variant === "v2" ? coverScenarios[scenario].current : 15;
   const [answers, setAnswers] = useState<Answers>({});
   const [pinCode, setPinCode] = useState("");
   const [member, setMember] = useState<NewMember>(defaultMember);
@@ -113,7 +126,9 @@ export function RenewalReview({ variant = "v1" }: { variant?: "v1" | "v2" } = {}
   const [steppedForm, setSteppedForm] = useState(false);
   const [proposal, setProposal] = useState<ProposalState>(emptyProposal);
   /** V2 holds its screen here so stepping back finds it as it was left. */
-  const [v2State, setV2State] = useState<V2State>(initialV2State);
+  const [v2State, setV2State] = useState<V2State>(() =>
+    initialV2StateFor(scenario),
+  );
   /** Cover picked on the V2 slider, which runs past the three v1 tiers. */
   const [coverLakhs, setCoverLakhs] = useState<number | null>(null);
   /** The price worked out on the first screen, carried to every screen after. */
@@ -187,7 +202,7 @@ export function RenewalReview({ variant = "v1" }: { variant?: "v1" | "v2" } = {}
         changed: changed("cover"),
         text: changed("cover")
           ? `Cover set to ${coverLabel}`
-          : "Same ₹15 Lakhs cover",
+          : `Same ₹${baseLakhs} Lakhs cover`,
       },
       {
         id: "add-ons" as QuestionId,
@@ -218,7 +233,7 @@ export function RenewalReview({ variant = "v1" }: { variant?: "v1" | "v2" } = {}
           : "Same nominee, Sneha Kumari, spouse",
       },
     ];
-  }, [answers, pinCode, contact.phone, member.fullName, cover, coverLakhs, bankForm.bankName, nominees, addOns]);
+  }, [answers, pinCode, contact.phone, member.fullName, cover, coverLakhs, baseLakhs, bankForm.bankName, nominees, addOns]);
 
   function answer(id: QuestionId, value: Answer) {
     setAnswers((previous) => ({ ...previous, [id]: value }));
@@ -377,7 +392,7 @@ export function RenewalReview({ variant = "v1" }: { variant?: "v1" | "v2" } = {}
 
   /** Fold the V2 screen down into the answers the rest of the journey reads. */
   function confirmV2() {
-    const touched = v2Changes(v2State);
+    const touched = v2Changes(v2State, baseLakhs);
     setAnswers({
       location: touched.address ? "yes" : "no",
       contact: "no",
@@ -402,14 +417,12 @@ export function RenewalReview({ variant = "v1" }: { variant?: "v1" | "v2" } = {}
     );
     setCoverLakhs(touched.cover ? v2State.lakhs : null);
     setAddOns({ selected: v2State.addOns, terms: {} });
-    setQuote(
-      touched.cover
-        ? {
-            cover: `₹${v2State.lakhs} Lakhs`,
-            premium: formatRupees(premiumFor(v2State.lakhs)),
-          }
-        : null,
-    );
+    /* Always carried: a policy that was already on ₹20 lakh must not fall
+       back to the ₹15 lakh drawn in the frames on the next screen. */
+    setQuote({
+      cover: `₹${v2State.lakhs} Lakhs`,
+      premium: formatRupees(premiumFor(v2State.lakhs)),
+    });
     goTo("calculating");
   }
 
@@ -463,6 +476,7 @@ export function RenewalReview({ variant = "v1" }: { variant?: "v1" | "v2" } = {}
           value={v2State}
           onChange={setV2State}
           onConfirm={confirmV2}
+          scenario={scenario}
         />
       );
     }

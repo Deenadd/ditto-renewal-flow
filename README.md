@@ -76,6 +76,7 @@ components/
   v2/renewal-v2.tsx    The five checks, and the state behind them
   v2/cover-picker.tsx  Six cover controls
   v2/cover-reasons.tsx Why this cover: two charts and the original text
+  v2/cover-baseline.tsx The cover the policy carries today, for every picker
 lib/
   renewal-data.ts      All copy and figures from the design
   proposal-data.ts     Medical questions, steps and step notes
@@ -266,6 +267,41 @@ also carries its band in words — "Not enough", "Recommended", "Extra room".
 
 The control blurs through a short swap when the version changes, and holds
 still under `prefers-reduced-motion`.
+
+### Scenarios: when they already have the recommended cover
+
+The frames only draw one customer: on ₹15 lakh, below the ₹20 lakh we'd
+recommend. A dashed **Prototype scenario** strip above the title switches
+between three starting points, each with its own link:
+
+| Scenario | Link | Policy today | Opens on |
+| --- | --- | --- | --- |
+| Has ₹15 lakh | `/v2` | ₹15 lakh | ₹15 lakh — the frames |
+| Has ₹15 lakh, ₹20 lakh pre-selected | `/v2?scenario=prepicked` | ₹15 lakh | ₹20 lakh |
+| Already has ₹20 lakh | `/v2?scenario=on` | ₹20 lakh | ₹20 lakh |
+
+**Already has ₹20 lakh** is the customer who took the recommendation last
+time, so the section stops selling. The heading becomes "Your cover amount,
+₹20 lakh is still right", the verdict "₹20 lakh is still right for your family"
+with reasons that reassure — it kept pace with costs, one heart treatment still
+leaves ₹14 lakh, nothing to add — and the figures read "+25% hospital costs,
+and your cover kept pace" and "₹0 extra a month". Cover can't go below ₹20
+lakh, so every picker offers ₹20, ₹25 and ₹30 lakh, with ₹20 lakh marked as
+today, and the value chart measures against what the family needed in 2024
+(₹20 lakh lands at 107%). Going higher is priced from ₹20 lakh, not ₹15. The
+sidebar and every later screen show ₹20 lakh at ₹40,429.
+
+**₹20 lakh pre-selected** keeps the ₹15 lakh policy but opens on the
+recommendation. A default that costs more has to say so where it was set, so a
+note above the picker reads "We've pre-selected ₹20 lakh, the cover we'd
+recommend. It adds ₹450 a month." with **Keep ₹15 lakh** beside it. The card's
+label reads "New cover" rather than "Current cover" while the amount differs
+from the policy. **Clear all changes** measures from where the scenario opens,
+so the pre-selection itself isn't something to clear, while continuing still
+treats ₹20 lakh as a change from the policy, and asks for the ID check.
+
+A ₹20 lakh policy costs the same whoever holds it, so the premium for each
+amount is fixed and only the difference depends on where the customer starts.
 
 ### Why this cover, as a chart
 

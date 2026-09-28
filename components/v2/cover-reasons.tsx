@@ -1,13 +1,14 @@
 "use client";
 
 import { VersionMenu } from "@/components/ui/version-menu";
+import { useCoverBaseline } from "@/components/v2/cover-baseline";
 import {
   BIG_CLAIM_LAKHS,
-  CURRENT_LAKHS,
   coverStops,
   protectionFor,
   reasonLayoutOptions,
   reasonStatsFor,
+  valueCaptionFor,
   verdictFor,
   zoneFor,
   type CoverZone,
@@ -15,9 +16,8 @@ import {
   type ReasonStat,
 } from "@/lib/v2-data";
 
-/** The amounts on offer at renewal; the drawn ₹10L stop is out of reach. */
-const offered = coverStops.filter((stop) => stop.lakhs >= CURRENT_LAKHS);
-const MOST = offered[offered.length - 1].lakhs;
+/** The top of every chart's scale, so amounts compare across scenarios. */
+const MOST = coverStops[coverStops.length - 1].lakhs;
 
 const surface: Record<CoverZone, string> = {
   low: "bg-orange-50",
@@ -42,7 +42,8 @@ const lakhsLabel = (lakhs: number) => `₹${lakhs} lakh`;
 
 /** "today" under the amount the policy carries now. */
 function TodayTag({ lakhs }: { lakhs: number }) {
-  if (lakhs !== CURRENT_LAKHS) return null;
+  const { current } = useCoverBaseline();
+  if (lakhs !== current) return null;
   return (
     <span className="block text-[11px] leading-[1.3] font-medium text-ink-secondary">
       today
@@ -61,6 +62,7 @@ function TodayTag({ lakhs }: { lakhs: number }) {
  * is the same size in every row, so the eye goes straight to the difference.
  */
 function ClaimChart({ lakhs }: { lakhs: number }) {
+  const { current, reachable: offered } = useCoverBaseline();
   const claimWidth = (BIG_CLAIM_LAKHS / MOST) * 100;
 
   const summary = [
@@ -69,7 +71,7 @@ function ClaimChart({ lakhs }: { lakhs: number }) {
       const left = stop.lakhs - BIG_CLAIM_LAKHS;
       const used = Math.round((BIG_CLAIM_LAKHS / stop.lakhs) * 100);
       return `${lakhsLabel(stop.lakhs)}${
-        stop.lakhs === CURRENT_LAKHS ? ", today" : ""
+        stop.lakhs === current ? ", today" : ""
       }: ${used}% used, ₹${left} lakh left.`;
     }),
     `Chosen: ${lakhsLabel(lakhs)}.`,
@@ -147,10 +149,11 @@ function ClaimChart({ lakhs }: { lakhs: number }) {
           Used by the treatment
         </li>
         <li className="flex items-center gap-2">
+          {/* Only the colours this chart actually draws. */}
           <span className="flex h-2.5 w-6 overflow-hidden rounded-sm">
-            <span className="bg-chart-low block flex-1" />
-            <span className="block flex-1 bg-success-solid-strong" />
-            <span className="block flex-1 bg-extra" />
+            {[...new Set(offered.map((stop) => zoneFor(stop.lakhs)))].map((zone) => (
+              <span key={zone} className={`block flex-1 ${fill[zone]}`} />
+            ))}
           </span>
           Left for the rest of the year
         </li>
@@ -173,15 +176,17 @@ const PLOT = 160;
  * own old self; ₹20 lakh is the first to clear it.
  */
 function ValueChart({ lakhs }: { lakhs: number }) {
+  const { current, reachable: offered } = useCoverBaseline();
+  const caption = valueCaptionFor(current);
   const most = protectionFor(MOST);
   const px = (share: number) => (share / most) * PLOT;
   const line = px(1);
 
   const summary = [
-    `How much each cover protects today, compared with what ₹${CURRENT_LAKHS} lakh bought in 2024.`,
+    `${caption}.`,
     ...offered.map(
       (stop) =>
-        `${lakhsLabel(stop.lakhs)}${stop.lakhs === CURRENT_LAKHS ? ", today" : ""}: ${Math.round(
+        `${lakhsLabel(stop.lakhs)}${stop.lakhs === current ? ", today" : ""}: ${Math.round(
           protectionFor(stop.lakhs) * 100,
         )}%.`,
     ),
@@ -191,7 +196,7 @@ function ValueChart({ lakhs }: { lakhs: number }) {
   return (
     <figure className="rounded-xl bg-white p-4">
       <figcaption className="text-[14px] leading-[1.4] font-semibold text-balance text-ink">
-        What each cover protects, against what ₹{CURRENT_LAKHS} lakh bought in 2024
+        {caption}
       </figcaption>
 
       <div role="img" aria-label={summary} className="mt-4">
@@ -283,8 +288,9 @@ function StatTiles({
   lakhs: number;
   drawn: ReasonStat["topic"];
 }) {
+  const { current } = useCoverBaseline();
   const zone = zoneFor(lakhs);
-  const stats = reasonStatsFor(lakhs)
+  const stats = reasonStatsFor(lakhs, current)
     .filter((stat) => stat.topic !== drawn)
     .slice(0, 2);
 
@@ -314,7 +320,8 @@ function StatTiles({
    --------------------------------------------------------------------------- */
 
 function TextReasons({ lakhs }: { lakhs: number }) {
-  const verdict = verdictFor(lakhs);
+  const { current } = useCoverBaseline();
+  const verdict = verdictFor(lakhs, current);
   return (
     <ol key={lakhs} className="mt-5 flex flex-col gap-4 motion-safe:animate-swap">
       {verdict.points.map((point, position) => (
@@ -360,7 +367,8 @@ export function CoverReasons({
   layout: ReasonLayout;
   onLayoutChange: (layout: ReasonLayout) => void;
 }) {
-  const verdict = verdictFor(lakhs);
+  const { current } = useCoverBaseline();
+  const verdict = verdictFor(lakhs, current);
 
   return (
     <div

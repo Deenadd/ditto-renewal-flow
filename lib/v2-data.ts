@@ -95,10 +95,56 @@ export const v2Members: V2Member[] = [
    Cover slider (node 142:3692)
    --------------------------------------------------------------------------- */
 
-/** The cover the policy carries today. The slider cannot go below it. */
+/**
+ * The cover the policy carries today in the frames. The prototype's scenarios
+ * can move it, so components read the cover in play from context and the
+ * helpers below take it as an argument, falling back to this.
+ */
 export const CURRENT_LAKHS = 15;
 /** Where the green band starts, and where the "recommended" marker sits. */
 export const RECOMMENDED_LAKHS = 20;
+
+/**
+ * Where the renewal starts. The frames only draw the first: a policy below
+ * the recommendation. The other two answer "what if they already have the
+ * recommended cover?" — read either as a policy that's already on ₹20 lakh,
+ * or as ₹20 lakh pre-selected for someone on ₹15 lakh.
+ */
+export type CoverScenario = "below" | "prepicked" | "on";
+
+export const coverScenarios: Record<
+  CoverScenario,
+  { current: number; opensAt: number; label: string; hint: string }
+> = {
+  below: {
+    current: CURRENT_LAKHS,
+    opensAt: CURRENT_LAKHS,
+    label: "Has ₹15 lakh",
+    hint: "Below the recommendation, as the frames draw it.",
+  },
+  prepicked: {
+    current: CURRENT_LAKHS,
+    opensAt: RECOMMENDED_LAKHS,
+    label: "Has ₹15 lakh, ₹20 lakh pre-selected",
+    hint: "Opens on the recommended cover. They can keep ₹15 lakh in one tap.",
+  },
+  on: {
+    current: RECOMMENDED_LAKHS,
+    opensAt: RECOMMENDED_LAKHS,
+    label: "Already has ₹20 lakh",
+    hint: "Already on the recommended cover, so there's nothing to push.",
+  },
+};
+
+export const coverScenarioOptions = (
+  Object.keys(coverScenarios) as CoverScenario[]
+).map((value) => ({ value, ...coverScenarios[value] }));
+
+export function parseScenario(value: unknown): CoverScenario {
+  return typeof value === "string" && value in coverScenarios
+    ? (value as CoverScenario)
+    : "below";
+}
 
 /**
  * The frame quotes "+₹450 / month" for the step from ₹15L to ₹20L, so each
@@ -226,9 +272,16 @@ export const BIG_CLAIM_LAKHS = 6;
 /** "Treatment that cost ₹12 lakh in 2024 costs about ₹15 lakh now." */
 export const COST_GROWTH_SINCE_2024 = 15 / 12;
 
+/** The value chart's caption. Its baseline is the family's 2024 need either way. */
+export function valueCaptionFor(current = CURRENT_LAKHS) {
+  return current >= RECOMMENDED_LAKHS
+    ? "What each cover protects, against what your family needed in 2024"
+    : `What each cover protects, against what ₹${CURRENT_LAKHS} lakh bought in 2024`;
+}
+
 /**
  * How much protection a cover buys at today's prices, as a share of what
- * ₹15 lakh bought in 2024. ₹15 lakh now comes out at 80%; ₹20 lakh at 107%,
+ * ₹15 lakh bought in 2024 — the family's need then, whatever they hold now. ₹15 lakh now comes out at 80%; ₹20 lakh at 107%,
  * which is the chart's version of "₹20 lakh today does what your ₹15 lakh did".
  */
 export function protectionFor(lakhs: number) {
@@ -246,7 +299,27 @@ export type ReasonStat = {
  * The verdict's three points as figures, for the chart versions to show beside
  * whichever point they draw.
  */
-export function reasonStatsFor(lakhs: number): ReasonStat[] {
+export function reasonStatsFor(lakhs: number, current = CURRENT_LAKHS): ReasonStat[] {
+  /* Already on the recommendation: the figures say why no change is needed. */
+  if (current >= RECOMMENDED_LAKHS && lakhs === current) {
+    return [
+      {
+        topic: "cost",
+        figure: `+${Math.round((COST_GROWTH_SINCE_2024 - 1) * 100)}%`,
+        label: "Hospital costs since 2024, and your cover kept pace",
+      },
+      {
+        topic: "claim",
+        figure: `${Math.round((BIG_CLAIM_LAKHS / lakhs) * 100)}%`,
+        label: `Of ₹${lakhs} lakh, used by one heart treatment`,
+      },
+      {
+        topic: "price",
+        figure: "₹0",
+        label: "Extra a month to stay on the recommended cover",
+      },
+    ];
+  }
   if (lakhs < RECOMMENDED_LAKHS) {
     return [
       {
@@ -266,7 +339,7 @@ export function reasonStatsFor(lakhs: number): ReasonStat[] {
       },
     ];
   }
-  const month = Math.round((premiumFor(lakhs) - premiumFor(CURRENT_LAKHS)) / 12 / 10) * 10;
+  const { month } = deltaFor(lakhs, current);
   return [
     {
       topic: "price",
@@ -276,7 +349,7 @@ export function reasonStatsFor(lakhs: number): ReasonStat[] {
     {
       topic: "start",
       figure: "30 days",
-      label: `Until the extra ₹${lakhs - CURRENT_LAKHS} lakh can be used`,
+      label: `Until the extra ₹${lakhs - current} lakh can be used`,
     },
   ];
 }
@@ -294,10 +367,44 @@ export function zoneFor(lakhs: number): CoverZone {
   return "high";
 }
 
-/** What this cover costs over the one on the policy today, a year and a month. */
-export function deltaFor(lakhs: number) {
-  const year = premiumFor(lakhs) - PREMIUM_AT_CURRENT;
+/**
+ * What this cover costs over the one on the policy today, a year and a month.
+ * A ₹20 lakh policy costs the same whoever holds it, so the premium itself is
+ * absolute and only the difference depends on where the reviewer starts.
+ */
+export function deltaFor(lakhs: number, current = CURRENT_LAKHS) {
+  const year = premiumFor(lakhs) - premiumFor(current);
   return { year, month: Math.round(year / 12 / 10) * 10 };
+}
+
+/** The caption under a slider tick, for a reviewer starting from `current`. */
+export function noteFor(lakhs: number, current = CURRENT_LAKHS) {
+  if (lakhs === current) return "you have now";
+  if (lakhs === RECOMMENDED_LAKHS && lakhs > current) {
+    return `+₹${deltaFor(lakhs, current).month.toLocaleString("en-IN")} / month`;
+  }
+  if (lakhs === 25 && lakhs > current) return "extra coverage";
+  return undefined;
+}
+
+/** The cover section's heading, which only asks the question if there is one. */
+export function coverSectionFor(current = CURRENT_LAKHS) {
+  if (current >= RECOMMENDED_LAKHS) {
+    return {
+      title: `Your cover amount, ₹${current} lakh is still right`,
+      description:
+        "Hospital costs have risen since you bought this policy, and your cover has kept pace. Here's how it holds up for your family today.",
+    };
+  }
+  return v2Sections.cover;
+}
+
+/** One line on what an amount buys, for a reviewer starting from `current`. */
+export function coverReasonFor(lakhs: number, current = CURRENT_LAKHS) {
+  if (lakhs === current && current >= RECOMMENDED_LAKHS) {
+    return "What you carry today, and the cover we'd recommend.";
+  }
+  return coverReasons[lakhs];
 }
 
 export type CoverVerdict = {
@@ -313,10 +420,54 @@ const inr = (value: number) => `₹${Math.round(value).toLocaleString("en-IN")}`
  * three times — ₹15L, ₹20L, ₹25L — and the ₹25L copy still names ₹20 lakh
  * throughout, so the figures are filled in from the stop instead.
  */
-export function verdictFor(lakhs: number): CoverVerdict {
+export function verdictFor(lakhs: number, current = CURRENT_LAKHS): CoverVerdict {
   const zone = zoneFor(lakhs);
-  const extra = lakhs - CURRENT_LAKHS;
-  const monthly = Math.round(((premiumFor(lakhs) - PREMIUM_AT_CURRENT) / 12) / 10) * 10;
+  const extra = lakhs - current;
+  const monthly = deltaFor(lakhs, current).month;
+
+  /* Already on the recommendation: reassure rather than sell. */
+  if (current >= RECOMMENDED_LAKHS && lakhs === current) {
+    return {
+      zone,
+      title: `₹${lakhs} lakh is still right for your family`,
+      points: [
+        {
+          title: "It kept pace with costs",
+          body: "A treatment that cost ₹12 lakh in 2024 costs about ₹15 lakh now, still well inside your cover.",
+        },
+        {
+          title: "Room for the whole family",
+          body: `One heart treatment (about ₹6 lakh) still leaves ₹${lakhs - 6} lakh for the other three.`,
+        },
+        {
+          title: "Nothing to add",
+          body: "You're already on the cover we'd recommend, so renewing as is keeps you protected.",
+        },
+      ],
+    };
+  }
+
+  /* Above a policy that was already enough: headroom, priced from there. */
+  if (current >= RECOMMENDED_LAKHS && lakhs > current) {
+    return {
+      zone,
+      title: `₹${lakhs} lakh gives you extra room`,
+      points: [
+        {
+          title: "Headroom for bigger bills",
+          body: `₹${lakhs} lakh today does what ₹${Math.round(lakhs / COST_GROWTH_SINCE_2024)} lakh did in 2024.`,
+        },
+        {
+          title: `About ₹${monthly.toLocaleString("en-IN")} more a month`,
+          body: `Your yearly price goes from ${inr(premiumFor(current))} to ${inr(premiumFor(lakhs))}.`,
+        },
+        {
+          title: `The extra ₹${extra} lakh starts soon`,
+          body: "You can use it 30 days after renewal and for illnesses you already have, after 3 years.",
+        },
+      ],
+    };
+  }
 
   if (zone === "low") {
     return {
@@ -342,11 +493,11 @@ export function verdictFor(lakhs: number): CoverVerdict {
   const points = [
     {
       title: "Same protection as 2024",
-      body: `₹${lakhs} lakh today does what your ₹${CURRENT_LAKHS} lakh did when you bought it.`,
+      body: `₹${lakhs} lakh today does what your ₹${current} lakh did when you bought it.`,
     },
     {
       title: `About ₹${monthly.toLocaleString("en-IN")} more a month`,
-      body: `Your yearly price goes from ${inr(PREMIUM_AT_CURRENT)} to ${inr(premiumFor(lakhs))}.`,
+      body: `Your yearly price goes from ${inr(premiumFor(current))} to ${inr(premiumFor(lakhs))}.`,
     },
     {
       title: `The extra ₹${extra} lakh starts soon`,

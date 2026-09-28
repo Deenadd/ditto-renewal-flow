@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { CoverBaseline } from "@/components/v2/cover-baseline";
 import { CoverPicker } from "@/components/v2/cover-picker";
 import { PolicySummary } from "@/components/policy-summary";
 import { SelectField, TextField } from "@/components/ui/field";
@@ -22,6 +24,10 @@ import {
 import {
   CURRENT_LAKHS,
   coverLayoutOptions,
+  coverScenarioOptions,
+  coverScenarios,
+  coverSectionFor,
+  deltaFor,
 
   formatAddress,
   premiumFor,
@@ -38,6 +44,7 @@ import {
   v2PickedAddOns,
   v2Sections,
   type CoverLayout,
+  type CoverScenario,
   type ReasonLayout,
   type V2AddOn,
   type V2Member,
@@ -606,32 +613,44 @@ export type V2State = {
   coverLayout: CoverLayout;
   /** How the reasons under it are shown. Also a display choice. */
   reasonLayout: ReasonLayout;
+  /** Whether the reviewer has moved the cover themselves. */
+  coverTouched: boolean;
 };
 
-export const initialV2State: V2State = {
-  address: {
-    street: v2Address.street,
-    city: v2Address.city,
-    pinCode: v2Address.pinCode,
-  },
-  added: [],
-  removed: [],
-  lakhs: CURRENT_LAKHS,
-  addOns: v2DefaultAddOns,
-  periodId: policyPeriods[0].id,
-  coverLayout: "slider",
-  reasonLayout: "claim",
-};
+/** The screen as a scenario opens it, before anyone has touched anything. */
+export function initialV2StateFor(scenario: CoverScenario): V2State {
+  return {
+    address: {
+      street: v2Address.street,
+      city: v2Address.city,
+      pinCode: v2Address.pinCode,
+    },
+    added: [],
+    removed: [],
+    lakhs: coverScenarios[scenario].opensAt,
+    addOns: v2DefaultAddOns,
+    periodId: policyPeriods[0].id,
+    coverLayout: "slider",
+    reasonLayout: "claim",
+    coverTouched: false,
+  };
+}
 
-/** What the reviewer touched, read the same way here and by the journey. */
-export function v2Changes(state: V2State) {
+export const initialV2State = initialV2StateFor("below");
+
+/**
+ * What differs from `baseline`: the policy as it is, for the journey (does
+ * this need an ID check?), or the scenario's starting point, for "Clear all
+ * changes" (is there anything to clear?).
+ */
+export function v2Changes(state: V2State, coverBaseline = CURRENT_LAKHS) {
   return {
     address:
       state.address.street !== v2Address.street ||
       state.address.city !== v2Address.city ||
       state.address.pinCode !== v2Address.pinCode,
     members: state.added.length > 0 || state.removed.length > 0,
-    cover: state.lakhs !== CURRENT_LAKHS,
+    cover: state.lakhs !== coverBaseline,
     addOns: state.addOns.join() !== v2DefaultAddOns.join(),
     period: state.periodId !== policyPeriods[0].id,
   };
@@ -645,11 +664,15 @@ export function RenewalV2({
   value,
   onChange,
   onConfirm,
+  scenario = "below",
 }: {
   value: V2State;
   onChange: (next: V2State) => void;
   onConfirm: () => void;
+  scenario?: CoverScenario;
 }) {
+  const router = useRouter();
+  const { current, opensAt } = coverScenarios[scenario];
   const {
     address,
     added,
@@ -667,23 +690,41 @@ export function RenewalV2({
     [added, removed],
   );
 
-  const touched = v2Changes(value);
-  const changed = Object.values(touched).some(Boolean);
+  const touched = v2Changes(value, current);
+  /* Measured from where the scenario opens, so a pre-selected ₹20 lakh is not
+     itself a change waiting to be cleared. */
+  const changed = Object.values(v2Changes(value, opensAt)).some(Boolean);
+  const prepicked =
+    scenario === "prepicked" && !value.coverTouched && lakhs === opensAt;
 
   function clearAll() {
     /* Which versions are on screen are not the reviewer's changes. */
-    onChange({ ...initialV2State, coverLayout, reasonLayout });
+    onChange({ ...initialV2StateFor(scenario), coverLayout, reasonLayout });
   }
 
-  const coverLabel =
-    lakhs === CURRENT_LAKHS
-      ? undefined
-      : `₹${lakhs} Lakhs`;
-
   return (
+    <CoverBaseline.Provider value={{ current }}>
     <main className="mx-auto max-w-[1112px] px-6 pt-10 pb-24 lg:pt-[82px] xl:px-0">
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-x-[63px]">
         <div className="min-w-0">
+          {/* Prototype control, not product UI: the dashed edge says so. The
+              scenario lives in the URL so each one can be shared as a link. */}
+          <div className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-dashed border-grey-200 bg-grey-50 py-2 pr-2 pl-3.5">
+            <span className="text-[13px] leading-none font-medium text-ink-secondary">
+              Prototype scenario
+            </span>
+            <VersionMenu
+              label="Prototype scenario"
+              value={scenario}
+              options={coverScenarioOptions}
+              onChange={(next) =>
+                router.replace(next === "below" ? "/v2" : `/v2?scenario=${next}`, {
+                  scroll: false,
+                })
+              }
+            />
+          </div>
+
           <h1 className="text-[32px] leading-[1.2] font-semibold tracking-[-0.4px] text-ink">
             {v2Intro.title}
           </h1>
@@ -754,7 +795,7 @@ export function RenewalV2({
 
             <Section
               index={3}
-              {...v2Sections.cover}
+              {...coverSectionFor(current)}
               action={
                 <VersionMenu
                   label="Cover picker version"
@@ -765,10 +806,30 @@ export function RenewalV2({
                 />
               }
             >
+              {prepicked ? (
+                /* An opt-out default has to say so, next to the control it
+                   set, with the way back one tap away. */
+                <p className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-blue-light px-4 py-3 text-[14px] leading-[1.45] text-ink motion-safe:animate-reveal">
+                  <InformationIcon className="shrink-0 text-primary" size={18} />
+                  <span className="min-w-0 flex-1 text-pretty">
+                    We&rsquo;ve pre-selected ₹{opensAt} lakh, the cover we&rsquo;d
+                    recommend. It adds ₹
+                    {deltaFor(opensAt, current).month.toLocaleString("en-IN")} a
+                    month.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => set({ lakhs: current, coverTouched: true })}
+                    className="shrink-0 rounded-md px-1 font-medium text-link underline decoration-from-font underline-offset-4 hover:text-primary-hover"
+                  >
+                    Keep ₹{current} lakh
+                  </button>
+                </p>
+              ) : null}
               <CoverPicker
                 layout={coverLayout}
                 lakhs={lakhs}
-                onChange={(next) => set({ lakhs: next })}
+                onChange={(next) => set({ lakhs: next, coverTouched: true })}
                 reasonLayout={reasonLayout}
                 onReasonLayoutChange={(next) => set({ reasonLayout: next })}
               />
@@ -821,7 +882,7 @@ export function RenewalV2({
               pinCode={
                 touched.address ? `${address.pinCode}, ${address.city}` : undefined
               }
-              cover={coverLabel}
+              cover={`₹${lakhs} Lakhs`}
               premium={formatRupees(premiumFor(lakhs))}
               addedMember={added[0]?.relation}
             />
@@ -829,6 +890,7 @@ export function RenewalV2({
         </aside>
       </div>
     </main>
+    </CoverBaseline.Provider>
   );
 }
 
