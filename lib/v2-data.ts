@@ -195,6 +195,92 @@ export const coverReasons: Record<number, string> = {
 /** Which of the three treatments the chosen cover falls into. */
 export type CoverZone = "low" | "good" | "high";
 
+/** How the reasons under the cover picker are presented. */
+export type ReasonLayout = "claim" | "value" | "text";
+
+export const reasonLayoutOptions: {
+  value: ReasonLayout;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    value: "claim",
+    label: "Version 1 · Claim chart",
+    hint: "What one big claim leaves behind, at each amount.",
+  },
+  {
+    value: "value",
+    label: "Version 2 · Value chart",
+    hint: "How much each amount protects, against 2024.",
+  },
+  {
+    value: "text",
+    label: "Original · Text",
+    hint: "The three points as the frame writes them.",
+  },
+];
+
+/** "One heart treatment (about ₹6 lakh)", from the verdict copy. */
+export const BIG_CLAIM_LAKHS = 6;
+
+/** "Treatment that cost ₹12 lakh in 2024 costs about ₹15 lakh now." */
+export const COST_GROWTH_SINCE_2024 = 15 / 12;
+
+/**
+ * How much protection a cover buys at today's prices, as a share of what
+ * ₹15 lakh bought in 2024. ₹15 lakh now comes out at 80%; ₹20 lakh at 107%,
+ * which is the chart's version of "₹20 lakh today does what your ₹15 lakh did".
+ */
+export function protectionFor(lakhs: number) {
+  return lakhs / COST_GROWTH_SINCE_2024 / CURRENT_LAKHS;
+}
+
+export type ReasonStat = {
+  /** Which reason this is, so a chart can leave out the one it draws. */
+  topic: "cost" | "claim" | "age" | "price" | "start";
+  figure: string;
+  label: string;
+};
+
+/**
+ * The verdict's three points as figures, for the chart versions to show beside
+ * whichever point they draw.
+ */
+export function reasonStatsFor(lakhs: number): ReasonStat[] {
+  if (lakhs < RECOMMENDED_LAKHS) {
+    return [
+      {
+        topic: "cost",
+        figure: `+${Math.round((COST_GROWTH_SINCE_2024 - 1) * 100)}%`,
+        label: "Hospital costs since 2024",
+      },
+      {
+        topic: "claim",
+        figure: `${Math.round((BIG_CLAIM_LAKHS / lakhs) * 100)}%`,
+        label: `Of ₹${lakhs} lakh, gone on one heart treatment`,
+      },
+      {
+        topic: "age",
+        figure: "Age 45",
+        label: "A simple form now. At 50 you may need medical tests.",
+      },
+    ];
+  }
+  const month = Math.round((premiumFor(lakhs) - premiumFor(CURRENT_LAKHS)) / 12 / 10) * 10;
+  return [
+    {
+      topic: "price",
+      figure: `+₹${month.toLocaleString("en-IN")}`,
+      label: "A month, over what you pay today",
+    },
+    {
+      topic: "start",
+      figure: "30 days",
+      label: `Until the extra ₹${lakhs - CURRENT_LAKHS} lakh can be used`,
+    },
+  ];
+}
+
 /** What each band means, said the same way wherever a picker names it. */
 export const zoneLabels: Record<CoverZone, string> = {
   low: "Not enough",

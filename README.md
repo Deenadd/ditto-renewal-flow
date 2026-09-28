@@ -74,7 +74,8 @@ components/
   ui/switch.tsx        Track-and-knob switch
   ui/version-menu.tsx  Menu button behind both version switchers
   v2/renewal-v2.tsx    The five checks, and the state behind them
-  v2/cover-picker.tsx  Six cover controls and the verdict they share
+  v2/cover-picker.tsx  Six cover controls
+  v2/cover-reasons.tsx Why this cover: two charts and the original text
 lib/
   renewal-data.ts      All copy and figures from the design
   proposal-data.ts     Medical questions, steps and step notes
@@ -263,10 +264,46 @@ Selection is never colour alone: a tick on the cards, a filled ring on the list
 and table, a solid chip on compare, and a named band everywhere. Every amount
 also carries its band in words — "Not enough", "Recommended", "Extra room".
 
-The card below all six changes its whole contents at once, so it blurs through
-the swap over 260ms rather than crossfading two readable copies of different
-text, and the control itself blurs through the same swap when the version
-changes. Both hold still under `prefers-reduced-motion`.
+The control blurs through a short swap when the version changes, and holds
+still under `prefers-reduced-motion`.
+
+### Why this cover, as a chart
+
+The card under the picker gave its reasons as three paragraphs. It now draws
+them, behind its own version menu, with the frame's text kept as the third
+option for comparison. Both charts show every amount at once and only move
+their highlight as the cover changes, so the difference between amounts is
+always on screen rather than one number at a time.
+
+| Version | Chart | The reason it draws |
+| --- | --- | --- |
+| 1 · Claim chart | A bar per amount on one ₹30 lakh scale, with one heart treatment (about ₹6 lakh) carved out of each | "Four of you share the same cover." The claim is the same size in every row, so what changes is what's left: ₹9 lakh at ₹15L, ₹14 lakh at ₹20L |
+| 2 · Value chart | A column per amount: how much it protects at today's prices, against a dashed line at what ₹15 lakh bought in 2024 | "Hospital bills went up." ₹15 lakh now protects 80% of what it did; ₹20 lakh is the first to clear the line, at 107% |
+| Original · Text | The three numbered points from the frame | — |
+
+Each chart is followed by the reasons it doesn't draw, as figures rather than
+sentences: "+25% hospital costs since 2024", "Age 45", "+₹450 a month",
+"30 days until the extra ₹5 lakh can be used". The figures follow the chosen
+amount, and take its band's colour.
+
+Both charts work from the verdict's own numbers — the ₹6 lakh treatment, and
+₹12 lakh in 2024 costing about ₹15 lakh now — so they cannot disagree with the
+text version. The value chart makes the frame's claim that "₹20 lakh today does
+what your ₹15 lakh did" checkable: ₹20 lakh ÷ 1.25 is ₹16 lakh of 2024 buying
+power, just over the ₹15 lakh line.
+
+Colours were measured for the 3:1 minimum that graphics need. The slider's
+yellow is only 1.70:1 on white, too faint for a bar, so "not enough" bars use a
+darker amber of the same hue (3.63:1). That amber sits within 1.1:1 of a flat
+grey in lightness, so what a claim has used up is hatched rather than grey, and
+the two stay apart for anyone who can't tell the hues apart. Each chart is one
+image to a screen reader, with a label that reads out every figure, and the
+stat tiles put the label before the number in the markup.
+
+The title above the charts changes wholly with the amount, so it blurs through
+a swap; the charts don't, because nothing in them is replaced. Switching chart
+versions keeps the cover you picked, and **Clear all changes** keeps the
+versions you chose.
 
 ## What "Yes" opens
 

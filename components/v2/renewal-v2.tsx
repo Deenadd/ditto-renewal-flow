@@ -38,6 +38,7 @@ import {
   v2PickedAddOns,
   v2Sections,
   type CoverLayout,
+  type ReasonLayout,
   type V2AddOn,
   type V2Member,
 } from "@/lib/v2-data";
@@ -603,6 +604,8 @@ export type V2State = {
   periodId: string;
   /** Which cover picker is on screen. A display choice, not an edit. */
   coverLayout: CoverLayout;
+  /** How the reasons under it are shown. Also a display choice. */
+  reasonLayout: ReasonLayout;
 };
 
 export const initialV2State: V2State = {
@@ -617,6 +620,7 @@ export const initialV2State: V2State = {
   addOns: v2DefaultAddOns,
   periodId: policyPeriods[0].id,
   coverLayout: "slider",
+  reasonLayout: "claim",
 };
 
 /** What the reviewer touched, read the same way here and by the journey. */
@@ -646,7 +650,16 @@ export function RenewalV2({
   onChange: (next: V2State) => void;
   onConfirm: () => void;
 }) {
-  const { address, added, removed, lakhs, addOns, periodId, coverLayout } = value;
+  const {
+    address,
+    added,
+    removed,
+    lakhs,
+    addOns,
+    periodId,
+    coverLayout,
+    reasonLayout,
+  } = value;
   const set = (patch: Partial<V2State>) => onChange({ ...value, ...patch });
 
   const members = useMemo(
@@ -658,8 +671,8 @@ export function RenewalV2({
   const changed = Object.values(touched).some(Boolean);
 
   function clearAll() {
-    /* Which picker is on screen is not one of the reviewer's changes. */
-    onChange({ ...initialV2State, coverLayout });
+    /* Which versions are on screen are not the reviewer's changes. */
+    onChange({ ...initialV2State, coverLayout, reasonLayout });
   }
 
   const coverLabel =
@@ -756,6 +769,8 @@ export function RenewalV2({
                 layout={coverLayout}
                 lakhs={lakhs}
                 onChange={(next) => set({ lakhs: next })}
+                reasonLayout={reasonLayout}
+                onReasonLayoutChange={(next) => set({ reasonLayout: next })}
               />
             </Section>
 

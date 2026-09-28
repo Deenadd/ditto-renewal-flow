@@ -102,6 +102,18 @@
   --color-extra-bg: #fbefff;
   --shadow-thumb: 0 2px 4px 0 rgb(0 0 0 / 0.1);
 
+  /* Reason charts under the cover picker. Bars sit on white, so each fill is
+     measured there for the 3:1 graphics minimum:
+       chart-low (below the recommendation)   3.63  (track-low itself: 1.70)
+       success-solid-strong                   3.85
+       extra                                  5.05
+     "Used" is hatched rather than a flat grey, because a flat grey lands
+     within 1.1:1 of chart-low and the two would merge for anyone who can't
+     tell the hues apart. */
+  --color-chart-low: #a48214;
+  --color-chart-used: #5e6063;
+  --color-chart-used-light: #b6b8ba;
+
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
@@ -147,6 +159,15 @@
 
   .ff-case {
     font-feature-settings: "case" 1;
+  }
+
+  /* What a claim has already used up, drawn as texture as well as tone. */
+  .bg-hatch-used {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--color-chart-used) 0 2px,
+      var(--color-chart-used-light) 2px 5px
+    );
   }
 
   /* Dashed rule between questions: #d6d7d8, 4/4 dash, as exported. */

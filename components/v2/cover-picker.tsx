@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckMarkIcon, MinusIcon, PlusIcon } from "@/components/icons";
+import { CoverReasons } from "@/components/v2/cover-reasons";
 import {
   CURRENT_LAKHS,
   RECOMMENDED_LAKHS,
@@ -15,6 +16,7 @@ import {
   zoneLabels,
   type CoverLayout,
   type CoverZone,
+  type ReasonLayout,
 } from "@/lib/v2-data";
 
 const MIN = coverStops[0].lakhs;
@@ -39,12 +41,6 @@ const zoneBorder: Record<CoverZone, string> = {
   low: "border-primary",
   good: "border-success-solid-strong",
   high: "border-extra",
-};
-
-const verdictSurface: Record<CoverZone, string> = {
-  low: "bg-orange-50",
-  good: "bg-green-100",
-  high: "bg-extra-bg",
 };
 
 const zoneDot: Record<CoverZone, string> = {
@@ -307,53 +303,6 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
           </li>
         ))}
       </ul>
-    </div>
-  );
-}
-
-/**
- * Why this cover, said in three points. Shared by all three pickers, because
- * it is the argument rather than the control.
- *
- * Its whole content changes with the stop, so it is keyed and blurs through
- * the swap rather than crossfading two readable copies of different text.
- */
-function VerdictCard({ lakhs }: { lakhs: number }) {
-  const verdict = verdictFor(lakhs);
-
-  return (
-    <div
-      className={`mt-5 rounded-2xl px-4 pt-3.5 pb-5 transition-colors duration-200 ${verdictSurface[verdict.zone]}`}
-    >
-      <div key={lakhs} className="motion-safe:animate-swap">
-        <h3 className="text-[18px] leading-[1.4] font-semibold tracking-[-0.2px] text-ink">
-          {verdict.title}
-        </h3>
-        <p className="mt-1.5 text-[14px] leading-5 text-ink-secondary">
-          Here&rsquo;s why, in three points.
-        </p>
-
-        <ol className="mt-5 flex flex-col gap-4">
-          {verdict.points.map((point, position) => (
-            <li key={point.title} className="flex items-start gap-2">
-              <span
-                aria-hidden="true"
-                className="ff-figures mt-[1px] grid size-5 shrink-0 place-items-center rounded-full bg-white text-[11px] leading-none font-medium text-ink-secondary"
-              >
-                {position + 1}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[14px] leading-[14px] font-semibold tracking-[-0.07px] text-ink">
-                  {point.title}
-                </p>
-                <p className="mt-2 text-[14px] leading-5 text-ink-secondary">
-                  {point.body}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
     </div>
   );
 }
@@ -912,14 +861,20 @@ const controls: Record<CoverLayout, (props: ControlProps) => React.ReactElement>
 };
 
 /**
- * The cover check. Three ways to pick the same five stops, sharing the verdict
+ * The cover check. Six ways to pick the same stops, sharing the reasons
  * beneath them, so the layouts can be compared on the control alone.
  */
 export function CoverPicker({
   layout,
   lakhs,
   onChange,
-}: ControlProps & { layout: CoverLayout }) {
+  reasonLayout,
+  onReasonLayoutChange,
+}: ControlProps & {
+  layout: CoverLayout;
+  reasonLayout: ReasonLayout;
+  onReasonLayoutChange: (layout: ReasonLayout) => void;
+}) {
   const Control = controls[layout];
 
   return (
@@ -930,7 +885,11 @@ export function CoverPicker({
         <Control lakhs={lakhs} onChange={onChange} />
       </div>
 
-      <VerdictCard lakhs={lakhs} />
+      <CoverReasons
+        lakhs={lakhs}
+        layout={reasonLayout}
+        onLayoutChange={onReasonLayoutChange}
+      />
 
       <p aria-live="polite" className="sr-only">
         Cover set to ₹{lakhs} lakh. {verdictFor(lakhs).title}
