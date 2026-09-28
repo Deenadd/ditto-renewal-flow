@@ -1,22 +1,18 @@
 "use client";
 
-import { VersionMenu } from "@/components/ui/version-menu";
+import { useState } from "react";
+import { ChevronDownIcon } from "@/components/icons";
 import { useCoverBaseline } from "@/components/v2/cover-baseline";
 import {
-  BIG_CLAIM_LAKHS,
   coverStops,
   protectionFor,
-  reasonLayoutOptions,
-  reasonStatsFor,
   valueCaptionFor,
   verdictFor,
   zoneFor,
   type CoverZone,
-  type ReasonLayout,
-  type ReasonStat,
 } from "@/lib/v2-data";
 
-/** The top of every chart's scale, so amounts compare across scenarios. */
+/** The top of the chart's scale, so amounts compare across scenarios. */
 const MOST = coverStops[coverStops.length - 1].lakhs;
 
 const surface: Record<CoverZone, string> = {
@@ -25,155 +21,39 @@ const surface: Record<CoverZone, string> = {
   high: "bg-extra-bg",
 };
 
-/** Bar fills, each measured on white for the 3:1 graphics minimum. */
+/** Column fills as drawn in node 146:4524: orange, green, violet. */
 const fill: Record<CoverZone, string> = {
-  low: "bg-chart-low",
+  low: "bg-wait-orange",
   good: "bg-success-solid-strong",
-  high: "bg-extra",
-};
-
-const figureText: Record<CoverZone, string> = {
-  low: "text-attention",
-  good: "text-success",
-  high: "text-extra",
+  high: "bg-extra shadow-[0_6px_14px_-4px_rgb(130_80_223_/_0.45)]",
 };
 
 const lakhsLabel = (lakhs: number) => `₹${lakhs} lakh`;
 
-/** "today" under the amount the policy carries now. */
-function TodayTag({ lakhs }: { lakhs: number }) {
-  const { current } = useCoverBaseline();
-  if (lakhs !== current) return null;
-  return (
-    <span className="block text-[11px] leading-[1.3] font-medium text-ink-secondary">
-      today
-    </span>
-  );
-}
-
-/* ---------------------------------------------------------------------------
-   Version 1 · Claim chart
-   --------------------------------------------------------------------------- */
-
 /**
- * "Four of you share the same ₹15 lakh" drawn instead of said. Every cover is
- * a bar on the same ₹30 lakh scale, one heart treatment is carved out of each,
- * and what's left for the rest of the year is the part that changes. The claim
- * is the same size in every row, so the eye goes straight to the difference.
+ * The frames' chart version keeps two of the three points and lets the chart
+ * make the third: below the recommendation it drops "It's easiest to add now",
+ * at it the chart already shows "Same protection as 2024", above it the start
+ * date goes.
  */
-function ClaimChart({ lakhs }: { lakhs: number }) {
-  const { current, reachable: offered } = useCoverBaseline();
-  const claimWidth = (BIG_CLAIM_LAKHS / MOST) * 100;
-
-  const summary = [
-    `One heart treatment of about ₹${BIG_CLAIM_LAKHS} lakh, against each cover.`,
-    ...offered.map((stop) => {
-      const left = stop.lakhs - BIG_CLAIM_LAKHS;
-      const used = Math.round((BIG_CLAIM_LAKHS / stop.lakhs) * 100);
-      return `${lakhsLabel(stop.lakhs)}${
-        stop.lakhs === current ? ", today" : ""
-      }: ${used}% used, ₹${left} lakh left.`;
-    }),
-    `Chosen: ${lakhsLabel(lakhs)}.`,
-  ].join(" ");
-
-  return (
-    <figure className="rounded-xl bg-white p-4">
-      <figcaption className="text-[14px] leading-[1.4] font-semibold text-balance text-ink">
-        If one of you needs heart treatment, about ₹{BIG_CLAIM_LAKHS} lakh
-      </figcaption>
-
-      <div role="img" aria-label={summary} className="mt-3 flex flex-col gap-0.5">
-        {offered.map((stop) => {
-          const zone = zoneFor(stop.lakhs);
-          const chosen = stop.lakhs === lakhs;
-          const left = stop.lakhs - BIG_CLAIM_LAKHS;
-          const used = Math.round((BIG_CLAIM_LAKHS / stop.lakhs) * 100);
-
-          return (
-            <div
-              key={stop.lakhs}
-              className={`grid grid-cols-[48px_minmax(0,1fr)_76px] items-center gap-3 rounded-lg px-2 py-2 transition-colors duration-200 sm:grid-cols-[52px_minmax(0,1fr)_92px] ${
-                chosen ? surface[zone] : ""
-              }`}
-            >
-              <span>
-                <span
-                  className={`block text-[14px] leading-[1.3] tabular-nums ${
-                    chosen ? "font-semibold text-ink" : "font-medium text-ink-secondary"
-                  }`}
-                >
-                  {stop.label}
-                </span>
-                <TodayTag lakhs={stop.lakhs} />
-              </span>
-
-              {/* The track runs to ₹30 lakh, so every bar shares one scale. */}
-              <span className="relative block h-4 rounded-full bg-grey-100">
-                <span
-                  className="bg-hatch-used absolute inset-y-0 left-0 rounded-l-full"
-                  style={{ width: `${claimWidth}%` }}
-                />
-                <span
-                  className={`absolute inset-y-0 rounded-r-full ${fill[zone]}`}
-                  style={{
-                    left: `calc(${claimWidth}% + 2px)`,
-                    width: `calc(${(left / MOST) * 100}% - 2px)`,
-                  }}
-                />
-              </span>
-
-              <span className="text-right">
-                <span
-                  className={`block text-[13px] leading-[1.3] tabular-nums ${
-                    chosen ? "font-semibold text-ink" : "font-medium text-ink"
-                  }`}
-                >
-                  ₹{left}L left
-                </span>
-                <span className="block text-[12px] leading-[1.3] text-ink-secondary tabular-nums">
-                  {used}% used
-                </span>
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      <ul
-        aria-hidden="true"
-        className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-grey-150 pt-3 text-[12px] leading-none text-ink-secondary"
-      >
-        <li className="flex items-center gap-2">
-          <span className="bg-hatch-used block h-2.5 w-4 rounded-sm" />
-          Used by the treatment
-        </li>
-        <li className="flex items-center gap-2">
-          {/* Only the colours this chart actually draws. */}
-          <span className="flex h-2.5 w-6 overflow-hidden rounded-sm">
-            {[...new Set(offered.map((stop) => zoneFor(stop.lakhs)))].map((zone) => (
-              <span key={zone} className={`block flex-1 ${fill[zone]}`} />
-            ))}
-          </span>
-          Left for the rest of the year
-        </li>
-      </ul>
-    </figure>
-  );
+function pointsShownWithChart(zone: CoverZone, count: number) {
+  const all = Array.from({ length: count }, (_, index) => index);
+  return zone === "good" ? all.slice(1, 3) : all.slice(0, 2);
 }
 
 /* ---------------------------------------------------------------------------
-   Version 2 · Value chart
+   The chart (Version 2)
    --------------------------------------------------------------------------- */
 
 /** Pixels for the tallest column; the 2024 line sits at 100% of the scale. */
-const PLOT = 160;
+const PLOT = 116;
 
 /**
- * "Hospital bills went up" drawn instead of said. Each column is how much a
- * cover protects at today's prices, as a share of what ₹15 lakh bought in
- * 2024, against a dashed line at that 2024 level. ₹15 lakh falls short of its
- * own old self; ₹20 lakh is the first to clear it.
+ * "Hospital bills went up", drawn. Each column is how much a cover protects at
+ * today's prices, as a share of what ₹15 lakh bought in 2024, against a dotted
+ * line at that 2024 level. ₹15 lakh falls short of its own old self; ₹20 lakh
+ * is the first to clear it. Every amount is always drawn; only the highlight
+ * behind the chosen one moves.
  */
 function ValueChart({ lakhs }: { lakhs: number }) {
   const { current, reachable: offered } = useCoverBaseline();
@@ -194,25 +74,28 @@ function ValueChart({ lakhs }: { lakhs: number }) {
   ].join(" ");
 
   return (
-    <figure className="rounded-xl bg-white p-4">
-      <figcaption className="text-[14px] leading-[1.4] font-semibold text-balance text-ink">
+    <figure className="mt-4 rounded-xl bg-white px-3 pt-3 pb-4">
+      <figcaption className="text-[13px] leading-[1.4] font-semibold text-balance text-ink">
         {caption}
       </figcaption>
 
-      <div role="img" aria-label={summary} className="mt-4">
+      <div role="img" aria-label={summary} className="mt-3">
         {/* One box for the plot and its gutter, so the line and its label
             are placed from the same baseline and can't drift apart. */}
-        <div aria-hidden="true" className="relative" style={{ height: PLOT + 22 }}>
+        <div aria-hidden="true" className="relative" style={{ height: PLOT + 12 }}>
           <span
-            className="absolute left-0 w-11 translate-y-1/2 text-right text-[11px] leading-[1.2] font-medium text-ink"
+            className="absolute left-0 w-12 translate-y-1/2 text-center"
             style={{ bottom: line }}
           >
-            2024
-            <br />
-            level
+            <span className="block text-[12px] leading-none font-semibold text-error-text">
+              2024
+            </span>
+            <span className="ff-case mt-1 block text-[9px] leading-none font-medium tracking-[0.5px] text-ink-secondary uppercase">
+              Level
+            </span>
           </span>
 
-          <div className="absolute inset-y-0 right-0 left-14 flex items-end justify-around gap-1.5 border-b border-grey-200">
+          <div className="absolute inset-y-0 right-0 left-14 flex items-end justify-around border-b border-grey-200">
             {offered.map((stop) => {
               const zone = zoneFor(stop.lakhs);
               const chosen = stop.lakhs === lakhs;
@@ -220,50 +103,50 @@ function ValueChart({ lakhs }: { lakhs: number }) {
               return (
                 <div
                   key={stop.lakhs}
-                  className="relative flex h-full w-full max-w-[76px] flex-col items-center justify-end"
+                  className="relative flex h-full w-12 flex-col items-center justify-end"
                 >
                   {chosen ? (
                     <span
-                      className={`absolute inset-x-0 top-0 bottom-0 rounded-t-lg transition-colors duration-200 ${surface[zone]}`}
+                      className={`absolute inset-x-1.5 bottom-0 rounded-t-md transition-colors duration-200 ${surface[zone]}`}
+                      style={{ height: Math.max(px(share), line) + 12 }}
                     />
                   ) : null}
                   <span
-                    className={`relative z-10 mb-1 text-[13px] leading-none tabular-nums ${
-                      chosen ? "font-semibold text-ink" : "font-medium text-ink-secondary"
-                    }`}
-                  >
-                    {Math.round(share * 100)}%
-                  </span>
-                  <span
-                    className={`relative z-10 block w-[52%] min-w-[20px] rounded-t-md ${fill[zone]}`}
+                    className={`relative z-10 flex w-6 justify-center rounded-t-[5px] pt-1.5 ${fill[zone]}`}
                     style={{ height: px(share) }}
-                  />
+                  >
+                    <span className="text-[9px] leading-none font-semibold text-white tabular-nums">
+                      {Math.round(share * 100)}%
+                    </span>
+                  </span>
                 </div>
               );
             })}
 
-            {/* Above the highlight band, beneath the columns: a column that
-                clears the 2024 level covers the line. */}
+            {/* Above the highlight, beneath the columns: a column that clears
+                the 2024 level covers the line. */}
             <span
-              className="pointer-events-none absolute inset-x-0 z-[5] border-t-2 border-dashed border-ink/55"
+              className="pointer-events-none absolute inset-x-0 z-[5] border-t border-dotted border-ink-secondary/70"
               style={{ bottom: line }}
             />
           </div>
         </div>
 
-        <div aria-hidden="true" className="mt-2 flex justify-around gap-1.5 pl-14">
+        <div aria-hidden="true" className="mt-2 flex justify-around pl-14">
           {offered.map((stop) => (
-            <span key={stop.lakhs} className="w-full max-w-[76px] text-center">
+            <span key={stop.lakhs} className="w-12 text-center">
               <span
-                className={`block text-[14px] leading-[1.3] tabular-nums ${
-                  stop.lakhs === lakhs
-                    ? "font-semibold text-ink"
-                    : "font-medium text-ink-secondary"
+                className={`block text-[12px] leading-[1.3] tabular-nums ${
+                  stop.lakhs === lakhs ? "font-semibold text-ink" : "font-medium text-ink-secondary"
                 }`}
               >
                 {stop.label}
               </span>
-              <TodayTag lakhs={stop.lakhs} />
+              {stop.lakhs === current ? (
+                <span className="ff-case block text-[9px] leading-[1.4] font-medium tracking-[0.5px] text-ink-secondary uppercase">
+                  Today
+                </span>
+              ) : null}
             </span>
           ))}
         </div>
@@ -273,58 +156,19 @@ function ValueChart({ lakhs }: { lakhs: number }) {
 }
 
 /* ---------------------------------------------------------------------------
-   Figures beside a chart
+   The points
    --------------------------------------------------------------------------- */
 
-/**
- * The reasons a chart doesn't draw, as figures rather than sentences. The
- * figure leads visually; the label comes first in the markup, so a screen
- * reader hears what the number is before the number.
- */
-function StatTiles({
-  lakhs,
-  drawn,
+function Points({
+  points,
+  className = "",
 }: {
-  lakhs: number;
-  drawn: ReasonStat["topic"];
+  points: { title: string; body: string }[];
+  className?: string;
 }) {
-  const { current } = useCoverBaseline();
-  const zone = zoneFor(lakhs);
-  const stats = reasonStatsFor(lakhs, current)
-    .filter((stat) => stat.topic !== drawn)
-    .slice(0, 2);
-
   return (
-    <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-      {stats.map((stat) => (
-        <div
-          key={stat.topic}
-          className="flex flex-col-reverse justify-end gap-1.5 rounded-xl bg-white px-4 py-3.5"
-        >
-          <dt className="text-[13px] leading-[1.45] text-pretty text-ink-secondary">
-            {stat.label}
-          </dt>
-          <dd
-            className={`text-[22px] leading-none font-semibold tracking-[-0.3px] tabular-nums ${figureText[zone]}`}
-          >
-            {stat.figure}
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-/* ---------------------------------------------------------------------------
-   Original · Text
-   --------------------------------------------------------------------------- */
-
-function TextReasons({ lakhs }: { lakhs: number }) {
-  const { current } = useCoverBaseline();
-  const verdict = verdictFor(lakhs, current);
-  return (
-    <ol key={lakhs} className="mt-5 flex flex-col gap-4 motion-safe:animate-swap">
-      {verdict.points.map((point, position) => (
+    <ol className={`flex flex-col gap-4 ${className}`}>
+      {points.map((point, position) => (
         <li key={point.title} className="flex items-start gap-2">
           <span
             aria-hidden="true"
@@ -336,7 +180,7 @@ function TextReasons({ lakhs }: { lakhs: number }) {
             <p className="text-[14px] leading-[14px] font-semibold tracking-[-0.07px] text-ink">
               {point.title}
             </p>
-            <p className="mt-2 text-[14px] leading-5 text-ink-secondary">
+            <p className="mt-2 text-[14px] leading-5 text-pretty text-ink-secondary">
               {point.body}
             </p>
           </div>
@@ -347,75 +191,88 @@ function TextReasons({ lakhs }: { lakhs: number }) {
 }
 
 /* ---------------------------------------------------------------------------
-   The card
+   Versions 1 and 2: the card under the slider
    --------------------------------------------------------------------------- */
 
 /**
- * Why this cover. Shared by every picker, because it is the argument rather
- * than the control, and offered three ways: two charts and the frame's text.
- *
- * The title changes its whole content with the stop, so it is keyed and blurs
- * through the swap. The charts are not keyed on the stop: they draw every
- * amount at once and only the highlight moves, so there is nothing to swap.
+ * Why this cover. Version 1 gives the three points; version 2 puts the value
+ * chart first and keeps the two points it doesn't draw. The card's content
+ * changes wholly with the amount, so it is keyed and blurs through the swap.
  */
 export function CoverReasons({
   lakhs,
-  layout,
-  onLayoutChange,
+  mode,
 }: {
   lakhs: number;
-  layout: ReasonLayout;
-  onLayoutChange: (layout: ReasonLayout) => void;
+  mode: "text" | "chart";
 }) {
   const { current } = useCoverBaseline();
   const verdict = verdictFor(lakhs, current);
+  const points =
+    mode === "chart"
+      ? pointsShownWithChart(verdict.zone, verdict.points.length).map(
+          (index) => verdict.points[index],
+        )
+      : verdict.points;
 
   return (
     <div
-      className={`mt-5 rounded-2xl px-4 pt-3.5 pb-4 transition-colors duration-200 ${surface[verdict.zone]}`}
+      className={`mt-4 rounded-2xl px-4 pt-3.5 pb-5 transition-colors duration-200 ${surface[verdict.zone]}`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-        {/* Full width on a phone, so the menu drops below the title instead
-            of squeezing it onto three lines. */}
-        <div
-          key={lakhs}
-          className="min-w-0 basis-full motion-safe:animate-swap sm:grow sm:basis-0"
-        >
-          <h3 className="text-[18px] leading-[1.4] font-semibold tracking-[-0.2px] text-balance text-ink">
-            {verdict.title}
-          </h3>
-          <p className="mt-1.5 text-[14px] leading-5 text-ink-secondary">
-            {layout === "text"
-              ? "Here’s why, in three points."
-              : "Here’s why, at a glance."}
-          </p>
-        </div>
-        <VersionMenu
-          label="Reason version"
-          value={layout}
-          options={reasonLayoutOptions}
-          onChange={(next) => onLayoutChange(next as ReasonLayout)}
-          align="end"
-        />
+      <div key={`${lakhs}-${mode}`} className="motion-safe:animate-swap">
+        <h3 className="text-[18px] leading-[1.4] font-semibold tracking-[-0.2px] text-balance text-ink">
+          {verdict.title}
+        </h3>
+        <p className="mt-1.5 text-[14px] leading-5 text-ink-secondary">
+          Here&rsquo;s why, in three points.
+        </p>
+        {mode === "chart" ? <ValueChart lakhs={lakhs} /> : null}
+        <Points points={points} className="mt-5" />
       </div>
+    </div>
+  );
+}
 
-      {/* Keyed on the version, so switching blurs through rather than
-          snapping one chart out and another in. */}
-      <div key={layout} className="motion-safe:animate-swap">
-        {layout === "claim" ? (
-          <div className="mt-4">
-            <ClaimChart lakhs={lakhs} />
-            <StatTiles lakhs={lakhs} drawn="claim" />
-          </div>
-        ) : layout === "value" ? (
-          <div className="mt-4">
-            <ValueChart lakhs={lakhs} />
-            <StatTiles lakhs={lakhs} drawn="cost" />
-          </div>
-        ) : (
-          <TextReasons lakhs={lakhs} />
-        )}
-      </div>
+/* ---------------------------------------------------------------------------
+   Version 3: the question under the list
+   --------------------------------------------------------------------------- */
+
+/**
+ * The list already says what each amount is, so the argument waits behind a
+ * question, tinted by the amount chosen, until someone wants it.
+ */
+export function WhyDrawer({ lakhs }: { lakhs: number }) {
+  const { current } = useCoverBaseline();
+  const verdict = verdictFor(lakhs, current);
+  const [open, setOpen] = useState(false);
+  const question =
+    verdict.zone === "low" ? `Why ${verdict.title}?` : verdict.title;
+
+  return (
+    <div
+      className={`mt-4 rounded-xl transition-colors duration-200 ${surface[verdict.zone]}`}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3.5 text-left text-[15px] leading-[1.35] font-semibold text-ink"
+      >
+        <span key={lakhs} className="motion-safe:animate-swap">
+          {question}
+        </span>
+        <ChevronDownIcon
+          size={18}
+          className={`shrink-0 text-ink transition-transform duration-200 ease-strong ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      {open ? (
+        <div key={lakhs} className="px-4 pb-5 motion-safe:animate-reveal">
+          <Points points={verdict.points} className="mt-1" />
+        </div>
+      ) : null}
     </div>
   );
 }

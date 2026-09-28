@@ -214,21 +214,24 @@ the ₹34,999 drawn in the frames.
 
 ### Picking the cover
 
-Three versions of the same decision, behind the menu at the trailing edge of
-the heading. They share the verdict card beneath them, so the comparison is
-about the control alone.
+The final frames (node `146:4524`) settle on three versions, behind the menu at
+the trailing edge of the heading. The other layouts explored along the way —
+cards, stepper, compare, table, the claim chart — are no longer offered; they
+remain in the git history.
 
-| Version | Control | What it is good at |
+| Version | Control | Reasons |
 | --- | --- | --- |
-| 1 · Slider | Drag or arrow along a five-stop track | The band you land in carries the advice; the frame's own design |
-| 2 · Cards | Four priced cards, one click | Every amount and its premium are legible without moving anything |
-| 3 · Stepper | − / + around one amount | Quietest of the three, and prices the change by the month |
+| 1 · Slider | The slider | Three numbered points in a card tinted by the amount |
+| 2 · Slider and chart | The slider | The same card, led by a chart of what each amount protects against 2024, then the two points the chart doesn't draw |
+| 3 · List | A card per amount, with its band, a line on what it buys, the yearly price and what it adds a month | Behind a tinted question — "Why ₹15 lakh is not enough anymore?" — that opens onto the three points |
 
-Versions 2 and 3 exist because the slider makes you move the handle to find out
-what ₹25 lakh costs. The cards answer that before you touch anything, and the
-stepper answers the question people actually budget against — what it adds to
-the month. All three reach the same four stops and write to the same value, and
-switching between them keeps the cover you had picked.
+The slider card follows the final frames too: the legend sits top right where
+the premium was, and the premium lives in the sidebar.
+
+In the chart the frames print ₹20L under all three upper columns and 110% on
+the ₹20L column; the build labels them ₹20L, ₹25L and ₹30L and prints 107%,
+which is ₹20 lakh ÷ 1.25 against ₹15 lakh. The list's first price reads
+₹34,599 in the frames; the build keeps ₹34,999, the figure everywhere else.
 
 #### Version 1, the slider
 
@@ -252,27 +255,11 @@ the other two versions offer four amounts rather than five.
 The handle and fill move on `transform` over 200ms `cubic-bezier(0.23, 1, 0.32, 1)`,
 so dragging across stops retargets smoothly instead of restarting.
 
-#### Versions 2 to 6
-
-Every one is a native form control with the chrome drawn over it — a radio
-group in a fieldset for cards, compare, list and table, two buttons for the
-stepper — so none of them needed a keyboard model written by hand, and all of
-them answer to arrow keys. The table is a real `<table>`, so each figure is
-announced with the amount it belongs to; below `sm` it scrolls, and its
-trailing edge fades so it does not read as ending at the second column.
-
-Selection is never colour alone: a tick on the cards, a filled ring on the list
-and table, a solid chip on compare, and a named band everywhere. Every amount
-also carries its band in words — "Not enough", "Recommended", "Extra room".
-
-The control blurs through a short swap when the version changes, and holds
-still under `prefers-reduced-motion`.
-
 ### Scenarios: when they already have the recommended cover
 
 The frames only draw one customer: on ₹15 lakh, below the ₹20 lakh we'd
-recommend. A dashed **Prototype scenario** strip above the title switches
-between three starting points, each with its own link:
+recommend. The scenario strip is hidden now the versions are final, but each starting
+point still has its own link:
 
 | Scenario | Link | Policy today | Opens on |
 | --- | --- | --- | --- |
@@ -302,44 +289,6 @@ treats ₹20 lakh as a change from the policy, and asks for the ID check.
 
 A ₹20 lakh policy costs the same whoever holds it, so the premium for each
 amount is fixed and only the difference depends on where the customer starts.
-
-### Why this cover, as a chart
-
-The card under the picker gave its reasons as three paragraphs. It now draws
-them, behind its own version menu, with the frame's text kept as the third
-option for comparison. Both charts show every amount at once and only move
-their highlight as the cover changes, so the difference between amounts is
-always on screen rather than one number at a time.
-
-| Version | Chart | The reason it draws |
-| --- | --- | --- |
-| 1 · Claim chart | A bar per amount on one ₹30 lakh scale, with one heart treatment (about ₹6 lakh) carved out of each | "Four of you share the same cover." The claim is the same size in every row, so what changes is what's left: ₹9 lakh at ₹15L, ₹14 lakh at ₹20L |
-| 2 · Value chart | A column per amount: how much it protects at today's prices, against a dashed line at what ₹15 lakh bought in 2024 | "Hospital bills went up." ₹15 lakh now protects 80% of what it did; ₹20 lakh is the first to clear the line, at 107% |
-| Original · Text | The three numbered points from the frame | — |
-
-Each chart is followed by the reasons it doesn't draw, as figures rather than
-sentences: "+25% hospital costs since 2024", "Age 45", "+₹450 a month",
-"30 days until the extra ₹5 lakh can be used". The figures follow the chosen
-amount, and take its band's colour.
-
-Both charts work from the verdict's own numbers — the ₹6 lakh treatment, and
-₹12 lakh in 2024 costing about ₹15 lakh now — so they cannot disagree with the
-text version. The value chart makes the frame's claim that "₹20 lakh today does
-what your ₹15 lakh did" checkable: ₹20 lakh ÷ 1.25 is ₹16 lakh of 2024 buying
-power, just over the ₹15 lakh line.
-
-Colours were measured for the 3:1 minimum that graphics need. The slider's
-yellow is only 1.70:1 on white, too faint for a bar, so "not enough" bars use a
-darker amber of the same hue (3.63:1). That amber sits within 1.1:1 of a flat
-grey in lightness, so what a claim has used up is hatched rather than grey, and
-the two stay apart for anyone who can't tell the hues apart. Each chart is one
-image to a screen reader, with a label that reads out every figure, and the
-stat tiles put the label before the number in the markup.
-
-The title above the charts changes wholly with the amount, so it blurs through
-a swap; the charts don't, because nothing in them is replaced. Switching chart
-versions keeps the cover you picked, and **Clear all changes** keeps the
-versions you chose.
 
 ## What "Yes" opens
 

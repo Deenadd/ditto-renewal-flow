@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { CoverBaseline } from "@/components/v2/cover-baseline";
 import { CoverPicker } from "@/components/v2/cover-picker";
 import { PolicySummary } from "@/components/policy-summary";
@@ -24,7 +23,6 @@ import {
 import {
   CURRENT_LAKHS,
   coverLayoutOptions,
-  coverScenarioOptions,
   coverScenarios,
   coverSectionFor,
   deltaFor,
@@ -671,7 +669,6 @@ export function RenewalV2({
   onConfirm: () => void;
   scenario?: CoverScenario;
 }) {
-  const router = useRouter();
   const { current, opensAt } = coverScenarios[scenario];
   const {
     address,
@@ -707,24 +704,6 @@ export function RenewalV2({
     <main className="mx-auto max-w-[1112px] px-6 pt-10 pb-24 lg:pt-[82px] xl:px-0">
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-x-[63px]">
         <div className="min-w-0">
-          {/* Prototype control, not product UI: the dashed edge says so. The
-              scenario lives in the URL so each one can be shared as a link. */}
-          <div className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-dashed border-grey-200 bg-grey-50 py-2 pr-2 pl-3.5">
-            <span className="text-[13px] leading-none font-medium text-ink-secondary">
-              Prototype scenario
-            </span>
-            <VersionMenu
-              label="Prototype scenario"
-              value={scenario}
-              options={coverScenarioOptions}
-              onChange={(next) =>
-                router.replace(next === "below" ? "/v2" : `/v2?scenario=${next}`, {
-                  scroll: false,
-                })
-              }
-            />
-          </div>
-
           <h1 className="text-[32px] leading-[1.2] font-semibold tracking-[-0.4px] text-ink">
             {v2Intro.title}
           </h1>
@@ -830,8 +809,6 @@ export function RenewalV2({
                 layout={coverLayout}
                 lakhs={lakhs}
                 onChange={(next) => set({ lakhs: next, coverTouched: true })}
-                reasonLayout={reasonLayout}
-                onReasonLayoutChange={(next) => set({ reasonLayout: next })}
               />
             </Section>
 

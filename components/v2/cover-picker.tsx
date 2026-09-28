@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { CheckMarkIcon, MinusIcon, PlusIcon } from "@/components/icons";
 import { useCoverBaseline } from "@/components/v2/cover-baseline";
-import { CoverReasons } from "@/components/v2/cover-reasons";
+import { CoverReasons, WhyDrawer } from "@/components/v2/cover-reasons";
 import {
   RECOMMENDED_LAKHS,
   coverLegend,
@@ -17,7 +15,6 @@ import {
   zoneLabels,
   type CoverLayout,
   type CoverZone,
-  type ReasonLayout,
 } from "@/lib/v2-data";
 
 const MIN = coverStops[0].lakhs;
@@ -48,39 +45,10 @@ const zoneDot: Record<CoverZone, string> = {
   high: "bg-extra",
 };
 
-const zoneFill: Record<CoverZone, string> = {
-  low: "bg-track-low",
-  good: "bg-success-solid-strong",
-  high: "bg-extra",
-};
-
-/**
- * Same family as the band, dark enough to carry a white tick. The band's own
- * amber is too light for a glyph to sit on.
- */
-const zoneTick: Record<CoverZone, string> = {
-  low: "bg-attention",
-  good: "bg-success-solid-strong",
-  high: "bg-extra",
-};
-
 const zoneChip: Record<CoverZone, string> = {
   low: "bg-orange-50 text-attention",
   good: "bg-green-100 text-success",
   high: "bg-extra-bg text-extra",
-};
-
-const zoneSurface: Record<CoverZone, string> = {
-  low: "border-track-low bg-orange-50/60",
-  good: "border-success-solid-strong bg-green-100/70",
-  high: "border-extra bg-extra-bg/70",
-};
-
-/** The same tint without the border, for rows and cells that carry their own. */
-const zoneTint: Record<CoverZone, string> = {
-  low: "bg-orange-50/60",
-  good: "bg-green-100/70",
-  high: "bg-extra-bg/70",
 };
 
 /** Two bars, the grab affordance inside the handle below the recommendation. */
@@ -155,18 +123,24 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
             ₹{lakhs} Lakhs
           </p>
         </div>
-        <div className="flex flex-col items-end gap-4">
-          <p className="ff-case text-[11px] leading-none font-medium tracking-[0.55px] text-ink-muted uppercase">
-            Premium
-          </p>
-          <p
-            className={`ff-figures text-[24px] leading-[1.3] font-semibold tracking-[-0.3px] transition-colors duration-200 ${
-              lakhs === current ? "text-ink" : zoneText[zone]
-            }`}
-          >
-            {rupees(premium)}/yr
-          </p>
-        </div>
+        {/* Final frames (node 146:4524): the legend sits top right, where the
+            premium used to be; the price lives in the sidebar. */}
+        <ul className="flex flex-col items-start gap-2.5 pt-1">
+          {coverLegend.map((entry) => (
+            <li
+              key={entry.id}
+              className="ff-case flex items-center gap-2 text-[11px] leading-none font-medium tracking-[0.55px] whitespace-nowrap text-ink uppercase"
+            >
+              <span
+                aria-hidden="true"
+                className={`block size-2 shrink-0 rounded-full ${
+                  entry.id === "low" ? "bg-track-low" : "bg-success-solid-strong"
+                }`}
+              />
+              {entry.label}
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* Rail. Everything inside is placed as a percentage of this box, and
@@ -290,43 +264,10 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
         </div>
       </div>
 
-      <ul className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2">
-        {coverLegend.map((entry) => (
-          <li
-            key={entry.id}
-            className="ff-case flex items-center gap-2 text-[11px] leading-none font-medium tracking-[0.55px] text-ink uppercase"
-          >
-            <span
-              aria-hidden="true"
-              className={`block size-2 shrink-0 rounded-full ${
-                entry.id === "low" ? "bg-track-low" : "bg-success-solid-strong"
-              }`}
-            />
-            {entry.label}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
 
-/** Filled ring that marks the chosen row, in the band's own colour. */
-function RadioDot({ chosen, zone }: { chosen: boolean; zone: CoverZone }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-150 ${
-        chosen ? `${zoneTick[zone]} border-transparent` : "border-grey-200 bg-white"
-      }`}
-    >
-      <span
-        className={`block size-1.5 rounded-full bg-white transition-opacity duration-150 ${
-          chosen ? "opacity-100" : "opacity-0"
-        }`}
-      />
-    </span>
-  );
-}
 
 /** What band this amount falls in, said in words as well as colour. */
 function ZoneChip({ lakhs }: { lakhs: number }) {
@@ -344,56 +285,32 @@ function ZoneChip({ lakhs }: { lakhs: number }) {
   );
 }
 
-/** Round step control either side of the amount in version 3. */
-function StepButton({
-  label,
-  disabled,
-  onClick,
-  children,
-}: {
-  label: string;
-  disabled: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      disabled={disabled}
-      onClick={onClick}
-      className={`grid size-9 shrink-0 place-items-center rounded-full border transition-[background-color,border-color,color,transform] duration-150 ${
-        disabled
-          ? "cursor-not-allowed border-grey-150 text-grey-200"
-          : "border-grey-200 text-ink hover:border-grey-300 hover:bg-grey-50 active:scale-[0.96]"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
+
+
+
+
+
+
+
 
 /**
- * Version 2. Every amount priced up front, so the choice is a comparison
- * rather than a search: the slider makes you move the handle to find out what
- * ₹25 lakh costs, and these four cards just say it.
+ * Version 3 (node 146:4524). A card per amount, stacked: the amount and its
+ * band, one line on what it buys, and the yearly price with what it adds. The
+ * reasons wait in a drawer below, so the list stays a list.
  */
-function CardsControl({ lakhs, onChange }: ControlProps) {
+function FinalListControl({ lakhs, onChange }: ControlProps) {
   const { current, reachable } = useCoverBaseline();
   return (
-    <fieldset className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <fieldset className="flex flex-col gap-2.5">
       <legend className="sr-only">Cover amount</legend>
       {reachable.map((stop) => {
         const zone = zoneFor(stop.lakhs);
         const chosen = stop.lakhs === lakhs;
         const delta = deltaFor(stop.lakhs, current);
-
         return (
           <label
             key={stop.lakhs}
-            className={`has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 flex cursor-pointer flex-col gap-3.5 rounded-xl border-2 p-3.5 shadow-card transition-[border-color,background-color,transform] duration-150 active:scale-[0.98] ${
-              chosen ? zoneSurface[zone] : "border-grey-150 bg-white hover:border-grey-200"
-            }`}
+            className="flex cursor-pointer items-start gap-3 rounded-xl border border-grey-150 bg-white px-4 py-3.5 shadow-card transition-colors duration-150 hover:border-grey-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2"
           >
             <input
               type="radio"
@@ -403,320 +320,41 @@ function CardsControl({ lakhs, onChange }: ControlProps) {
               aria-label={`₹${stop.lakhs} lakh, ${rupees(premiumFor(stop.lakhs))} a year`}
               className="sr-only"
             />
-
-            <span className="flex items-start justify-between gap-2">
-              <span className="ff-figures text-[20px] leading-none font-semibold tracking-[-0.3px] text-ink">
-                {stop.label}
-              </span>
-              <span
-                aria-hidden="true"
-                className={`grid size-[18px] shrink-0 place-items-center rounded-full transition-colors duration-150 ${
-                  chosen
-                    ? `${zoneTick[zone]} text-white`
-                    : "border-[1.5px] border-grey-200"
-                }`}
-              >
-                {chosen ? <CheckMarkIcon size={11} /> : null}
-              </span>
-            </span>
-
-            <span className="block">
-              <span className="ff-figures block text-[15px] leading-none font-medium text-ink">
-                {rupees(premiumFor(stop.lakhs))}
-                <span className="font-normal text-ink-muted">/yr</span>
-              </span>
-              <span className="ff-figures mt-2 block text-[13px] leading-none text-ink-secondary">
-                {delta.year === 0
-                  ? "You have now"
-                  : `+${rupees(delta.year)} a year`}
-              </span>
-            </span>
-
             <span
-              className={`ff-case flex w-fit items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] leading-none font-medium tracking-[0.4px] uppercase ${zoneChip[zone]}`}
+              aria-hidden="true"
+              className={`mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-150 ${
+                chosen ? "border-primary bg-primary" : "border-grey-200 bg-white"
+              }`}
             >
               <span
-                aria-hidden="true"
-                className={`block size-1.5 shrink-0 rounded-full ${zoneDot[zone]}`}
-              />
-              {stop.lakhs === RECOMMENDED_LAKHS ? "Recommended" : zoneLabels[zone]}
-            </span>
-          </label>
-        );
-      })}
-    </fieldset>
-  );
-}
-
-/**
- * Version 3. One amount at a time, priced by the month, which is the unit
- * people budget in. The meter keeps the sense of position the slider gives
- * without asking anyone to drag anything.
- */
-function StepperControl({ lakhs, onChange }: ControlProps) {
-  const { current, reachable } = useCoverBaseline();
-  const zone = zoneFor(lakhs);
-  const index = reachable.findIndex((stop) => stop.lakhs === lakhs);
-  const delta = deltaFor(lakhs, current);
-  const step = (by: number) => onChange(reachable[index + by].lakhs);
-
-  return (
-    <div className="rounded-2xl border border-grey-150 bg-white p-5 shadow-card">
-      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-5">
-        <div className="flex flex-col gap-4">
-          <p className="ff-case text-[11px] leading-none font-medium tracking-[0.55px] text-ink-muted uppercase">
-            Cover amount
-          </p>
-          <div className="flex h-9 items-center gap-3">
-            <StepButton
-              label="Lower the cover"
-              disabled={index === 0}
-              onClick={() => step(-1)}
-            >
-              <MinusIcon />
-            </StepButton>
-            <p className="ff-figures min-w-[142px] text-center text-[26px] leading-none font-semibold tracking-[-0.4px] text-ink tabular-nums">
-              ₹{lakhs} Lakhs
-            </p>
-            <StepButton
-              label="Raise the cover"
-              disabled={index === reachable.length - 1}
-              onClick={() => step(1)}
-            >
-              <PlusIcon />
-            </StepButton>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-end gap-4">
-          <p className="ff-case text-[11px] leading-none font-medium tracking-[0.55px] text-ink-muted uppercase">
-            Premium
-          </p>
-          <p
-            className={`ff-figures flex h-9 items-center text-[26px] leading-none font-semibold tracking-[-0.4px] transition-colors duration-200 ${
-              lakhs === current ? "text-ink" : zoneText[zone]
-            }`}
-          >
-            {rupees(premiumFor(lakhs))}/yr
-          </p>
-        </div>
-      </div>
-
-      <div aria-hidden="true" className="mt-6 flex items-center gap-1.5">
-        {reachable.map((stop, position) => (
-          <span
-            key={stop.lakhs}
-            className={`h-1.5 flex-1 rounded-full transition-colors duration-200 ${
-              position <= index ? zoneFill[zone] : "bg-grey-150"
-            }`}
-          />
-        ))}
-      </div>
-
-      <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span
-          className={`ff-case flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] leading-none font-medium tracking-[0.4px] uppercase ${zoneChip[zone]}`}
-        >
-          <span
-            aria-hidden="true"
-            className={`block size-1.5 shrink-0 rounded-full ${zoneDot[zone]}`}
-          />
-          {lakhs === RECOMMENDED_LAKHS ? "Recommended" : zoneLabels[zone]}
-        </span>
-        <span className="text-[14px] leading-5 text-ink-secondary">
-          {delta.year === 0
-            ? "Exactly what you pay today."
-            : `About ₹${delta.month.toLocaleString("en-IN")} more a month than you pay now.`}
-        </span>
-      </p>
-    </div>
-  );
-}
-
-
-/**
- * Version 4. The decision most people are actually making is binary — keep
- * what you have, or move up — so the layout says that, and the amount to move
- * up to becomes the smaller question inside it.
- */
-function CompareControl({ lakhs, onChange }: ControlProps) {
-  const { current, reachable } = useCoverBaseline();
-  const upgrades = reachable.filter((stop) => stop.lakhs > current);
-  /* Which upgrade the right panel offers while the left one is chosen: the
-     recommendation if it's above today, otherwise the next amount up. */
-  const [pendingUp, setPendingUp] = useState(
-    () => upgrades[0]?.lakhs ?? RECOMMENDED_LAKHS,
-  );
-  const upTo = lakhs > current ? lakhs : pendingUp;
-  const movedUp = lakhs > current;
-  const upZone = zoneFor(upTo);
-  const delta = deltaFor(upTo, current);
-
-  return (
-    <fieldset className="grid gap-3 sm:grid-cols-2">
-      <legend className="sr-only">Cover amount</legend>
-
-      <label
-        className={`has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 flex cursor-pointer flex-col gap-3 rounded-2xl border-2 p-4 shadow-card transition-[border-color,background-color] duration-150 ${
-          movedUp
-            ? "border-grey-150 bg-white hover:border-grey-200"
-            : zoneSurface.low
-        }`}
-      >
-        <input
-          type="radio"
-          name="cover-amount"
-          checked={!movedUp}
-          onChange={() => onChange(current)}
-          aria-label={`Keep ₹${current} lakh, ${rupees(premiumFor(current))} a year`}
-          className="sr-only"
-        />
-        <span className="ff-case block text-[11px] leading-none font-medium tracking-[0.55px] text-ink-muted uppercase">
-          You have now
-        </span>
-        <span className="block">
-          <span className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
-            <span className="ff-figures text-[24px] leading-[1.3] font-semibold tracking-[-0.3px] text-ink">
-              ₹{current} Lakhs
-            </span>
-            <ZoneChip lakhs={current} />
-          </span>
-          <span className="ff-figures mt-1.5 block text-[15px] leading-none text-ink-secondary">
-            {rupees(premiumFor(current))}/yr
-          </span>
-        </span>
-        <span className="block text-[14px] leading-5 text-ink-secondary">
-          {coverReasonFor(current, current)}
-        </span>
-        <span className="mt-auto flex flex-wrap items-center gap-2 pt-1">
-          <span
-            className={`ff-figures flex h-8 cursor-pointer items-center rounded-lg border px-2.5 text-[14px] leading-none font-medium transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.96]    ${
-              movedUp
-                ? "border-grey-200 bg-white text-ink"
-                : "border-transparent bg-ink text-white"
-            }`}
-          >
-            Keep ₹{current}L
-          </span>
-        </span>
-      </label>
-
-      <div
-        className={`flex flex-col gap-3 rounded-2xl border-2 p-4 shadow-card transition-[border-color,background-color] duration-150 ${
-          movedUp ? zoneSurface[upZone] : "border-grey-150 bg-white"
-        }`}
-      >
-        <span className="ff-case block text-[11px] leading-none font-medium tracking-[0.55px] text-ink-muted uppercase">
-          Move up to
-        </span>
-        <span className="block">
-          <span className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
-            <span className="ff-figures text-[24px] leading-[1.3] font-semibold tracking-[-0.3px] text-ink tabular-nums">
-              ₹{upTo} Lakhs
-            </span>
-            <ZoneChip lakhs={upTo} />
-          </span>
-          <span className="ff-figures mt-1.5 block text-[15px] leading-none text-ink-secondary">
-            {rupees(premiumFor(upTo))}/yr
-            <span className={`ml-2 font-medium ${zoneText[upZone]}`}>
-              +₹{delta.month.toLocaleString("en-IN")} a month
-            </span>
-          </span>
-        </span>
-        <span className="block text-[14px] leading-5 text-ink-secondary">
-          {coverReasonFor(upTo, current)}
-        </span>
-
-        <span className="mt-auto flex flex-wrap items-center gap-2 pt-1">
-          {upgrades.map((stop) => {
-            const chosen = movedUp && stop.lakhs === upTo;
-            return (
-              <label
-                key={stop.lakhs}
-                className={`has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 ff-figures flex h-8 cursor-pointer items-center rounded-lg border px-2.5 text-[14px] leading-none font-medium transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.96] ${
-                  chosen
-                    ? "border-transparent bg-ink text-white"
-                    : "border-grey-200 bg-white text-ink hover:bg-grey-50"
+                className={`block size-1.5 rounded-full bg-white transition-opacity duration-150 ${
+                  chosen ? "opacity-100" : "opacity-0"
                 }`}
-              >
-                <input
-                  type="radio"
-                  name="cover-amount"
-                  checked={chosen}
-                  onChange={() => {
-                    setPendingUp(stop.lakhs);
-                    onChange(stop.lakhs);
-                  }}
-                  aria-label={`Move up to ₹${stop.lakhs} lakh, ${rupees(premiumFor(stop.lakhs))} a year`}
-                  className="sr-only"
-                />
-                {stop.label}
-              </label>
-            );
-          })}
-        </span>
-      </div>
-    </fieldset>
-  );
-}
-
-/**
- * Version 5. One row per amount, which leaves room for a line on what each
- * one buys — the thing the four-across cards have no space for, and the
- * layout a phone wants anyway.
- */
-function ListControl({ lakhs, onChange }: ControlProps) {
-  const { current, reachable } = useCoverBaseline();
-  return (
-    <fieldset className="overflow-hidden rounded-2xl border border-grey-150 bg-white shadow-card">
-      <legend className="sr-only">Cover amount</legend>
-      {reachable.map((stop, position) => {
-        const zone = zoneFor(stop.lakhs);
-        const chosen = stop.lakhs === lakhs;
-        const delta = deltaFor(stop.lakhs, current);
-
-        return (
-          <label
-            key={stop.lakhs}
-            className={`has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 flex cursor-pointer items-start gap-3 px-4 py-4 transition-colors duration-150 ${
-              position > 0 ? "border-t border-grey-150" : ""
-            } ${chosen ? zoneTint[zone] : "hover:bg-grey-50"}`}
-          >
-            <input
-              type="radio"
-              name="cover-amount"
-              checked={chosen}
-              onChange={() => onChange(stop.lakhs)}
-              aria-label={`₹${stop.lakhs} lakh, ${rupees(premiumFor(stop.lakhs))} a year`}
-              className="sr-only"
-            />
-            <RadioDot chosen={chosen} zone={zone} />
-
+              />
+            </span>
             <span className="min-w-0 flex-1">
               <span className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                <span className="ff-figures text-[16px] leading-[1.3] font-semibold text-ink">
+                <span className="ff-figures text-[15px] leading-[1.3] font-semibold text-ink">
                   ₹{stop.lakhs} Lakhs
                 </span>
                 <ZoneChip lakhs={stop.lakhs} />
               </span>
-              <span className="mt-1.5 block text-[14px] leading-5 text-ink-secondary">
+              <span className="mt-1.5 block text-[13px] leading-[1.45] text-pretty text-ink-secondary">
                 {coverReasonFor(stop.lakhs, current)}
               </span>
             </span>
-
             <span className="shrink-0 text-right">
-              <span className="ff-figures block text-[15px] leading-none font-semibold text-ink">
-                {rupees(premiumFor(stop.lakhs))}
-                <span className="font-normal text-ink-muted">/yr</span>
+              <span className="ff-figures block text-[15px] leading-none font-semibold text-ink tabular-nums">
+                {rupees(premiumFor(stop.lakhs))}/yr
               </span>
               <span
-                className={`ff-figures mt-2 block text-[13px] leading-none ${
+                className={`ff-figures mt-1.5 block text-[12px] leading-none tabular-nums ${
                   delta.year === 0 ? "text-ink-secondary" : zoneText[zone]
                 }`}
               >
                 {delta.year === 0
                   ? "no change"
-                  : `+₹${delta.month.toLocaleString("en-IN")} a month`}
+                  : `+₹${delta.month.toLocaleString("en-IN")}/month`}
               </span>
             </span>
           </label>
@@ -726,149 +364,10 @@ function ListControl({ lakhs, onChange }: ControlProps) {
   );
 }
 
-/**
- * Version 6. The same four amounts as columns, so every figure lines up with
- * its counterpart and the comparison is a read across a row rather than four
- * separate cards held in your head.
- */
-function TableControl({ lakhs, onChange }: ControlProps) {
-  const { current, reachable } = useCoverBaseline();
-  const cell = "px-3 py-3 text-center transition-colors duration-150";
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-grey-150 bg-white shadow-card">
-      {/* Below sm the four columns cannot fit, so the trailing edge fades to
-          say there is more to scroll to rather than looking like the end. */}
-      <div
-        role="region"
-        aria-label="Cover amounts compared"
-        tabIndex={0}
-        className="overflow-x-auto [mask-image:linear-gradient(to_right,black_calc(100%_-_36px),transparent)] sm:[mask-image:none]"
-      >
-        <table className="w-full min-w-[540px] border-collapse">
-          <caption className="sr-only">
-            Premium and verdict for each cover amount
-          </caption>
-          <thead>
-            <tr>
-              <th scope="row" className="w-[132px]" />
-              {reachable.map((stop) => {
-                const chosen = stop.lakhs === lakhs;
-                const zone = zoneFor(stop.lakhs);
-                return (
-                  <th key={stop.lakhs} scope="col" className="p-0 align-bottom">
-                    <label
-                      className={`has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2 flex cursor-pointer flex-col items-center gap-2 px-3 pt-4 pb-3 transition-colors duration-150 ${
-                        chosen ? zoneTint[zone] : "hover:bg-grey-50"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="cover-amount"
-                        checked={chosen}
-                        onChange={() => onChange(stop.lakhs)}
-                        aria-label={`₹${stop.lakhs} lakh, ${rupees(premiumFor(stop.lakhs))} a year`}
-                        className="sr-only"
-                      />
-                      <RadioDot chosen={chosen} zone={zone} />
-                      <span className="ff-figures text-[18px] leading-none font-semibold text-ink">
-                        {stop.label}
-                      </span>
-                    </label>
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-
-          <tbody className="border-t border-grey-150">
-            <tr>
-              <th
-                scope="row"
-                className="ff-case px-4 py-3 text-left text-[11px] leading-none font-medium tracking-[0.55px] text-ink-muted uppercase"
-              >
-                A year
-              </th>
-              {reachable.map((stop) => (
-                <td
-                  key={stop.lakhs}
-                  className={`ff-figures ${cell} text-[15px] leading-none font-medium text-ink ${
-                    stop.lakhs === lakhs
-                      ? zoneTint[zoneFor(stop.lakhs)]
-                      : ""
-                  }`}
-                >
-                  {rupees(premiumFor(stop.lakhs))}
-                </td>
-              ))}
-            </tr>
-
-            <tr className="border-t border-grey-150">
-              <th
-                scope="row"
-                className="ff-case px-4 py-3 text-left text-[11px] leading-none font-medium tracking-[0.55px] text-ink-muted uppercase"
-              >
-                A month more
-              </th>
-              {reachable.map((stop) => {
-                const delta = deltaFor(stop.lakhs, current);
-                return (
-                  <td
-                    key={stop.lakhs}
-                    className={`ff-figures ${cell} text-[15px] leading-none ${
-                      delta.year === 0
-                        ? "text-ink-muted"
-                        : `font-medium ${zoneText[zoneFor(stop.lakhs)]}`
-                    } ${
-                      stop.lakhs === lakhs
-                        ? zoneTint[zoneFor(stop.lakhs)]
-                        : ""
-                    }`}
-                  >
-                    {delta.year === 0
-                      ? "—"
-                      : `+₹${delta.month.toLocaleString("en-IN")}`}
-                  </td>
-                );
-              })}
-            </tr>
-
-            <tr className="border-t border-grey-150">
-              <th
-                scope="row"
-                className="ff-case px-4 py-3 text-left text-[11px] leading-none font-medium tracking-[0.55px] text-ink-muted uppercase"
-              >
-                Our read
-              </th>
-              {reachable.map((stop) => (
-                <td
-                  key={stop.lakhs}
-                  className={`${cell} ${
-                    stop.lakhs === lakhs
-                      ? zoneTint[zoneFor(stop.lakhs)]
-                      : ""
-                  }`}
-                >
-                  <span className="flex justify-center">
-                    <ZoneChip lakhs={stop.lakhs} />
-                  </span>
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
 const controls: Record<CoverLayout, (props: ControlProps) => React.ReactElement> = {
   slider: SliderControl,
-  cards: CardsControl,
-  stepper: StepperControl,
-  compare: CompareControl,
-  list: ListControl,
-  table: TableControl,
+  chart: SliderControl,
+  list: FinalListControl,
 };
 
 /**
@@ -879,13 +378,7 @@ export function CoverPicker({
   layout,
   lakhs,
   onChange,
-  reasonLayout,
-  onReasonLayoutChange,
-}: ControlProps & {
-  layout: CoverLayout;
-  reasonLayout: ReasonLayout;
-  onReasonLayoutChange: (layout: ReasonLayout) => void;
-}) {
+}: ControlProps & { layout: CoverLayout }) {
   const Control = controls[layout];
   const { current } = useCoverBaseline();
 
@@ -897,11 +390,11 @@ export function CoverPicker({
         <Control lakhs={lakhs} onChange={onChange} />
       </div>
 
-      <CoverReasons
-        lakhs={lakhs}
-        layout={reasonLayout}
-        onLayoutChange={onReasonLayoutChange}
-      />
+      {layout === "list" ? (
+        <WhyDrawer lakhs={lakhs} />
+      ) : (
+        <CoverReasons lakhs={lakhs} mode={layout === "chart" ? "chart" : "text"} />
+      )}
 
       <p aria-live="polite" className="sr-only">
         Cover set to ₹{lakhs} lakh. {verdictFor(lakhs, current).title}

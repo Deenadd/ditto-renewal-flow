@@ -182,13 +182,12 @@ export const coverLegend = [
 ] as const;
 
 /** How each cover picker presents the same five stops. */
-export type CoverLayout =
-  | "slider"
-  | "cards"
-  | "stepper"
-  | "compare"
-  | "list"
-  | "table";
+/**
+ * How the cover question is presented. The final frames (node 146:4524) keep
+ * three; the other layouts explored earlier are hidden from the menu, and
+ * their code went with them.
+ */
+export type CoverLayout = "slider" | "chart" | "list";
 
 export const coverLayoutOptions: {
   value: CoverLayout;
@@ -198,32 +197,17 @@ export const coverLayoutOptions: {
   {
     value: "slider",
     label: "Version 1 · Slider",
-    hint: "The band you land in carries the advice.",
+    hint: "The slider, with the reasons as three points.",
   },
   {
-    value: "cards",
-    label: "Version 2 · Cards",
-    hint: "Every amount priced up front, one click to pick.",
-  },
-  {
-    value: "stepper",
-    label: "Version 3 · Stepper",
-    hint: "One amount at a time, with what it costs a month.",
-  },
-  {
-    value: "compare",
-    label: "Version 4 · Compare",
-    hint: "Keep what you have, or move up. Two panels, one decision.",
+    value: "chart",
+    label: "Version 2 · Slider and chart",
+    hint: "The slider, with a chart of what each amount protects.",
   },
   {
     value: "list",
-    label: "Version 5 · List",
-    hint: "A row per amount, with a line on what it buys you.",
-  },
-  {
-    value: "table",
-    label: "Version 6 · Table",
-    hint: "All four side by side, figures aligned to compare.",
+    label: "Version 3 · List",
+    hint: "A row per amount, with the reasons behind a question.",
   },
 ];
 
