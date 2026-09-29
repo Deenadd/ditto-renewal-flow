@@ -182,34 +182,6 @@ export const coverLegend = [
 ] as const;
 
 /** How each cover picker presents the same five stops. */
-/**
- * How the cover question is presented. The final frames (node 146:4524) keep
- * three; the other layouts explored earlier are hidden from the menu, and
- * their code went with them.
- */
-export type CoverLayout = "slider" | "chart" | "list";
-
-export const coverLayoutOptions: {
-  value: CoverLayout;
-  label: string;
-  hint: string;
-}[] = [
-  {
-    value: "slider",
-    label: "Version 1 · Slider",
-    hint: "The slider, with the reasons as three points.",
-  },
-  {
-    value: "chart",
-    label: "Version 2 · Slider and chart",
-    hint: "The slider, with a chart of what each amount protects.",
-  },
-  {
-    value: "list",
-    label: "Version 3 · List",
-    hint: "A row per amount, with the reasons behind a question.",
-  },
-];
 
 /**
  * One line on what each amount buys, for the pickers with room to say it.
@@ -225,30 +197,6 @@ export const coverReasons: Record<number, string> = {
 /** Which of the three treatments the chosen cover falls into. */
 export type CoverZone = "low" | "good" | "high";
 
-/** How the reasons under the cover picker are presented. */
-export type ReasonLayout = "claim" | "value" | "text";
-
-export const reasonLayoutOptions: {
-  value: ReasonLayout;
-  label: string;
-  hint: string;
-}[] = [
-  {
-    value: "claim",
-    label: "Version 1 · Claim chart",
-    hint: "What one big claim leaves behind, at each amount.",
-  },
-  {
-    value: "value",
-    label: "Version 2 · Value chart",
-    hint: "How much each amount protects, against 2024.",
-  },
-  {
-    value: "text",
-    label: "Original · Text",
-    hint: "The three points as the frame writes them.",
-  },
-];
 
 /** "One heart treatment (about ₹6 lakh)", from the verdict copy. */
 export const BIG_CLAIM_LAKHS = 6;

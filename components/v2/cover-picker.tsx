@@ -1,19 +1,14 @@
 "use client";
 
 import { useCoverBaseline } from "@/components/v2/cover-baseline";
-import { CoverReasons, WhyDrawer } from "@/components/v2/cover-reasons";
+import { CoverReasons } from "@/components/v2/cover-reasons";
 import {
   RECOMMENDED_LAKHS,
-  coverLegend,
-  coverReasonFor,
   coverStops,
-  deltaFor,
   noteFor,
   premiumFor,
   verdictFor,
   zoneFor,
-  zoneLabels,
-  type CoverLayout,
   type CoverZone,
 } from "@/lib/v2-data";
 
@@ -27,28 +22,27 @@ function pct(lakhs: number) {
 
 const RECO_PCT = pct(RECOMMENDED_LAKHS);
 
+/**
+ * Node 147:5537 settles on two colours: orange below the recommendation,
+ * green at or above it. Text takes the darker attention orange, which holds
+ * 5:1 on white where the fill orange would not.
+ */
 const zoneText: Record<CoverZone, string> = {
-  low: "text-primary",
+  low: "text-attention",
   good: "text-success",
-  high: "text-extra",
+  high: "text-success",
 };
 
 const zoneBorder: Record<CoverZone, string> = {
-  low: "border-primary",
+  low: "border-wait-orange",
   good: "border-success-solid-strong",
-  high: "border-extra",
+  high: "border-success-solid-strong",
 };
 
-const zoneDot: Record<CoverZone, string> = {
-  low: "bg-track-low",
+const zoneFillBar: Record<CoverZone, string> = {
+  low: "bg-wait-orange",
   good: "bg-success-solid-strong",
-  high: "bg-extra",
-};
-
-const zoneChip: Record<CoverZone, string> = {
-  low: "bg-orange-50 text-attention",
-  good: "bg-green-100 text-success",
-  high: "bg-extra-bg text-extra",
+  high: "bg-success-solid-strong",
 };
 
 /** Two bars, the grab affordance inside the handle below the recommendation. */
@@ -69,13 +63,13 @@ function GripMark() {
 }
 
 /** Solid shield (node 142:3806), the handle mark once the cover is enough. */
-function ShieldMark() {
+function ShieldMark({ size = 10 }: { size?: number }) {
   return (
     <svg
       aria-hidden="true"
       focusable="false"
-      width="10"
-      height="11"
+      width={size}
+      height={(size * 11) / 10}
       viewBox="0 0 10 11"
       fill="none"
     >
@@ -123,24 +117,18 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
             ₹{lakhs} Lakhs
           </p>
         </div>
-        {/* Final frames (node 146:4524): the legend sits top right, where the
-            premium used to be; the price lives in the sidebar. */}
-        <ul className="flex flex-col items-start gap-2.5 pt-1">
-          {coverLegend.map((entry) => (
-            <li
-              key={entry.id}
-              className="ff-case flex items-center gap-2 text-[11px] leading-none font-medium tracking-[0.55px] whitespace-nowrap text-ink uppercase"
-            >
-              <span
-                aria-hidden="true"
-                className={`block size-2 shrink-0 rounded-full ${
-                  entry.id === "low" ? "bg-track-low" : "bg-success-solid-strong"
-                }`}
-              />
-              {entry.label}
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col items-end gap-4">
+          <p className="ff-case text-[11px] leading-none font-medium tracking-[0.55px] text-ink-muted uppercase">
+            Premium
+          </p>
+          <p
+            className={`ff-figures text-[24px] leading-[1.3] font-semibold tracking-[-0.3px] tabular-nums transition-colors duration-200 ${
+              lakhs === current ? "text-ink" : zoneText[zone]
+            }`}
+          >
+            {rupees(premium)}/yr
+          </p>
+        </div>
       </div>
 
       {/* Rail. Everything inside is placed as a percentage of this box, and
@@ -155,33 +143,23 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
           Recommended
         </span>
 
-        <div className="relative mt-[24px] h-2 rounded-full bg-track-base">
-          <span
-            aria-hidden="true"
-            style={{ width: `${RECO_PCT}%` }}
-            className="absolute inset-y-0 left-0 rounded-l-full bg-track-low"
-          />
-          <span
-            aria-hidden="true"
-            style={{ left: `${RECO_PCT}%` }}
-            className="absolute inset-y-0 right-0 rounded-r-full bg-success-solid-strong"
-          />
+        <div className="relative mt-[24px] h-2 rounded-full bg-grey-150">
           <span
             aria-hidden="true"
             style={{ transform: `scaleX(${pct(lakhs) / 100})` }}
-            className="absolute inset-y-0 left-0 w-full origin-left rounded-full bg-linear-to-r from-track-fill-from to-track-fill-to transition-transform duration-200 ease-strong"
+            className={`absolute inset-y-0 left-0 w-full origin-left rounded-full transition-[transform,background-color] duration-200 ease-strong ${zoneFillBar[zone]}`}
           />
 
-          {/* The recommendation marker, which the handle stands in for once
-              it arrives. */}
+          {/* The recommendation, marked with the shield the handle wears once
+              it arrives there. */}
           <span
             aria-hidden="true"
             style={{ left: `${RECO_PCT}%` }}
-            className={`absolute top-1/2 grid size-4 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-reco-halo transition-opacity duration-200 ${
+            className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 text-success-solid-strong transition-opacity duration-200 ${
               onRecommended ? "opacity-0" : "opacity-100"
             }`}
           >
-            <span className="block size-[6.4px] rounded-full bg-success-solid-strong" />
+            <ShieldMark size={14} />
           </span>
 
           <input
@@ -215,8 +193,6 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
         <div className="relative mt-[21px] h-4">
           {coverStops.map((stop) => {
             const active = stop.lakhs === lakhs;
-            const reached =
-              stop.lakhs === RECOMMENDED_LAKHS && lakhs >= RECOMMENDED_LAKHS;
             const locked = stop.lakhs < current;
 
             return (
@@ -228,9 +204,7 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
                     ? "text-grey-200"
                     : active
                       ? `font-semibold ${zoneText[zone]}`
-                      : reached
-                        ? "font-semibold text-success"
-                        : "text-ink"
+                      : "text-ink"
                 }`}
               >
                 {stop.label}
@@ -250,11 +224,7 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
                 key={stop.lakhs}
                 style={{ left: `${pct(stop.lakhs)}%` }}
                 className={`absolute top-0 -translate-x-1/2 text-[14px] leading-5 whitespace-nowrap ${
-                  stop.lakhs === current
-                    ? "text-ink-secondary"
-                    : stop.lakhs === RECOMMENDED_LAKHS
-                      ? "text-success"
-                      : "text-extra"
+                  stop.lakhs === current ? "text-ink-secondary" : "text-success"
                 }`}
               >
                 {note}
@@ -269,21 +239,8 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
 }
 
 
-/** What band this amount falls in, said in words as well as colour. */
-function ZoneChip({ lakhs }: { lakhs: number }) {
-  const zone = zoneFor(lakhs);
-  return (
-    <span
-      className={`ff-case flex w-fit shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] leading-none font-medium tracking-[0.4px] uppercase ${zoneChip[zone]}`}
-    >
-      <span
-        aria-hidden="true"
-        className={`block size-1.5 shrink-0 rounded-full ${zoneDot[zone]}`}
-      />
-      {lakhs === RECOMMENDED_LAKHS ? "Recommended" : zoneLabels[zone]}
-    </span>
-  );
-}
+
+
 
 
 
@@ -294,107 +251,16 @@ function ZoneChip({ lakhs }: { lakhs: number }) {
 
 
 /**
- * Version 3 (node 146:4524). A card per amount, stacked: the amount and its
- * band, one line on what it buys, and the yearly price with what it adds. The
- * reasons wait in a drawer below, so the list stays a list.
+ * The cover check (node 147:5537): the slider, with the reasons card beneath
+ * it led by a chart of what each amount protects.
  */
-function FinalListControl({ lakhs, onChange }: ControlProps) {
-  const { current, reachable } = useCoverBaseline();
-  return (
-    <fieldset className="flex flex-col gap-2.5">
-      <legend className="sr-only">Cover amount</legend>
-      {reachable.map((stop) => {
-        const zone = zoneFor(stop.lakhs);
-        const chosen = stop.lakhs === lakhs;
-        const delta = deltaFor(stop.lakhs, current);
-        return (
-          <label
-            key={stop.lakhs}
-            className="flex cursor-pointer items-start gap-3 rounded-xl border border-grey-150 bg-white px-4 py-3.5 shadow-card transition-colors duration-150 hover:border-grey-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2"
-          >
-            <input
-              type="radio"
-              name="cover-amount"
-              checked={chosen}
-              onChange={() => onChange(stop.lakhs)}
-              aria-label={`₹${stop.lakhs} lakh, ${rupees(premiumFor(stop.lakhs))} a year`}
-              className="sr-only"
-            />
-            <span
-              aria-hidden="true"
-              className={`mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-150 ${
-                chosen ? "border-primary bg-primary" : "border-grey-200 bg-white"
-              }`}
-            >
-              <span
-                className={`block size-1.5 rounded-full bg-white transition-opacity duration-150 ${
-                  chosen ? "opacity-100" : "opacity-0"
-                }`}
-              />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                <span className="ff-figures text-[15px] leading-[1.3] font-semibold text-ink">
-                  ₹{stop.lakhs} Lakhs
-                </span>
-                <ZoneChip lakhs={stop.lakhs} />
-              </span>
-              <span className="mt-1.5 block text-[13px] leading-[1.45] text-pretty text-ink-secondary">
-                {coverReasonFor(stop.lakhs, current)}
-              </span>
-            </span>
-            <span className="shrink-0 text-right">
-              <span className="ff-figures block text-[15px] leading-none font-semibold text-ink tabular-nums">
-                {rupees(premiumFor(stop.lakhs))}/yr
-              </span>
-              <span
-                className={`ff-figures mt-1.5 block text-[12px] leading-none tabular-nums ${
-                  delta.year === 0 ? "text-ink-secondary" : zoneText[zone]
-                }`}
-              >
-                {delta.year === 0
-                  ? "no change"
-                  : `+₹${delta.month.toLocaleString("en-IN")}/month`}
-              </span>
-            </span>
-          </label>
-        );
-      })}
-    </fieldset>
-  );
-}
-
-const controls: Record<CoverLayout, (props: ControlProps) => React.ReactElement> = {
-  slider: SliderControl,
-  chart: SliderControl,
-  list: FinalListControl,
-};
-
-/**
- * The cover check. Six ways to pick the same stops, sharing the reasons
- * beneath them, so the layouts can be compared on the control alone.
- */
-export function CoverPicker({
-  layout,
-  lakhs,
-  onChange,
-}: ControlProps & { layout: CoverLayout }) {
-  const Control = controls[layout];
+export function CoverPicker({ lakhs, onChange }: ControlProps) {
   const { current } = useCoverBaseline();
 
   return (
     <div>
-      {/* Keyed on the layout so swapping versions blurs through rather than
-          snapping one control out and another in. */}
-      <div key={layout} className="motion-safe:animate-swap">
-        <Control lakhs={lakhs} onChange={onChange} />
-      </div>
-
-      {layout === "list" ? (
-        <WhyDrawer lakhs={lakhs} />
-      ) : (
-        <CoverReasons lakhs={lakhs} mode={layout === "chart" ? "chart" : "text"} />
-      )}
+      <SliderControl lakhs={lakhs} onChange={onChange} />
+      <CoverReasons lakhs={lakhs} />
 
       <p aria-live="polite" className="sr-only">
         Cover set to ₹{lakhs} lakh. {verdictFor(lakhs, current).title}

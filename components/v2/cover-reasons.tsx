@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDownIcon } from "@/components/icons";
 import { useCoverBaseline } from "@/components/v2/cover-baseline";
 import {
+  COST_GROWTH_SINCE_2024,
   coverStops,
-  protectionFor,
   valueCaptionFor,
   verdictFor,
   zoneFor,
@@ -15,18 +13,21 @@ import {
 /** The top of the chart's scale, so amounts compare across scenarios. */
 const MOST = coverStops[coverStops.length - 1].lakhs;
 
+/** Two colours, as in node 147:5537: orange below the recommendation, green from it up. */
 const surface: Record<CoverZone, string> = {
   low: "bg-orange-50",
   good: "bg-green-100",
-  high: "bg-extra-bg",
+  high: "bg-green-100",
 };
 
-/** Column fills as drawn in node 146:4524: orange, green, violet. */
 const fill: Record<CoverZone, string> = {
   low: "bg-wait-orange",
   good: "bg-success-solid-strong",
-  high: "bg-extra shadow-[0_6px_14px_-4px_rgb(130_80_223_/_0.45)]",
+  high: "bg-success-solid-strong",
 };
+
+/** What ₹15 lakh bought in 2024, in today's prices: the family's need now. */
+const NEED_NOW_LAKHS = 15 * COST_GROWTH_SINCE_2024;
 
 const lakhsLabel = (lakhs: number) => `₹${lakhs} lakh`;
 
@@ -45,30 +46,32 @@ function pointsShownWithChart(zone: CoverZone, count: number) {
    The chart (Version 2)
    --------------------------------------------------------------------------- */
 
-/** Pixels for the tallest column; the 2024 line sits at 100% of the scale. */
+/** Pixels for the tallest column. */
 const PLOT = 116;
 
 /**
- * "Hospital bills went up", drawn. Each column is how much a cover protects at
- * today's prices, as a share of what ₹15 lakh bought in 2024, against a dotted
- * line at that 2024 level. ₹15 lakh falls short of its own old self; ₹20 lakh
- * is the first to clear it. Every amount is always drawn; only the highlight
- * behind the chosen one moves.
+ * "Hospital bills went up", drawn. Each column is a cover amount on one
+ * scale. Two dotted lines mark what the family needed: ₹15 lakh in 2024, and
+ * the same care at today's prices in 2026. ₹15 lakh reaches the 2024 line and
+ * stops short of today's; ₹20 lakh is the first to clear it. Each column is
+ * labelled with its share of today's need. Only the chosen column is coloured.
  */
 function ValueChart({ lakhs }: { lakhs: number }) {
   const { current, reachable: offered } = useCoverBaseline();
   const caption = valueCaptionFor(current);
-  const most = protectionFor(MOST);
-  const px = (share: number) => (share / most) * PLOT;
-  const line = px(1);
+  const px = (value: number) => (value / MOST) * PLOT;
+  const share = (value: number) => Math.round((value / NEED_NOW_LAKHS) * 100);
+  const lines = [
+    { year: "2026", at: px(NEED_NOW_LAKHS), label: "text-error-text", rule: "border-error-text/60" },
+    { year: "2024", at: px(15), label: "text-ink-muted", rule: "border-ink-muted" },
+  ];
 
   const summary = [
     `${caption}.`,
+    `What your family needs today is about ₹${NEED_NOW_LAKHS.toFixed(2).replace(/\.?0+$/, "")} lakh.`,
     ...offered.map(
       (stop) =>
-        `${lakhsLabel(stop.lakhs)}${stop.lakhs === current ? ", today" : ""}: ${Math.round(
-          protectionFor(stop.lakhs) * 100,
-        )}%.`,
+        `${lakhsLabel(stop.lakhs)}${stop.lakhs === current ? ", today" : ""}: ${share(stop.lakhs)}% of that.`,
     ),
     `Chosen: ${lakhsLabel(lakhs)}.`,
   ].join(" ");
@@ -80,26 +83,21 @@ function ValueChart({ lakhs }: { lakhs: number }) {
       </figcaption>
 
       <div role="img" aria-label={summary} className="mt-3">
-        {/* One box for the plot and its gutter, so the line and its label
-            are placed from the same baseline and can't drift apart. */}
-        <div aria-hidden="true" className="relative" style={{ height: PLOT + 12 }}>
-          <span
-            className="absolute left-0 w-12 translate-y-1/2 text-center"
-            style={{ bottom: line }}
-          >
-            <span className="block text-[12px] leading-none font-semibold text-error-text">
-              2024
+        <div aria-hidden="true" className="relative" style={{ height: PLOT + 8 }}>
+          {lines.map((line) => (
+            <span
+              key={line.year}
+              className={`absolute left-0 w-12 translate-y-1/2 text-center text-[11px] leading-none font-semibold tabular-nums ${line.label}`}
+              style={{ bottom: line.at }}
+            >
+              {line.year}
             </span>
-            <span className="ff-case mt-1 block text-[9px] leading-none font-medium tracking-[0.5px] text-ink-secondary uppercase">
-              Level
-            </span>
-          </span>
+          ))}
 
           <div className="absolute inset-y-0 right-0 left-14 flex items-end justify-around border-b border-grey-200">
             {offered.map((stop) => {
               const zone = zoneFor(stop.lakhs);
               const chosen = stop.lakhs === lakhs;
-              const share = protectionFor(stop.lakhs);
               return (
                 <div
                   key={stop.lakhs}
@@ -107,28 +105,31 @@ function ValueChart({ lakhs }: { lakhs: number }) {
                 >
                   {chosen ? (
                     <span
-                      className={`absolute inset-x-1.5 bottom-0 rounded-t-md transition-colors duration-200 ${surface[zone]}`}
-                      style={{ height: Math.max(px(share), line) + 12 }}
+                      className={`absolute inset-x-0 bottom-0 rounded-t-md transition-colors duration-200 ${surface[zone]}`}
+                      style={{ height: px(stop.lakhs) + 10 }}
                     />
                   ) : null}
                   <span
-                    className={`relative z-10 flex w-6 justify-center rounded-t-[5px] pt-1.5 ${fill[zone]}`}
-                    style={{ height: px(share) }}
+                    className={`relative z-10 flex w-8 justify-center rounded-t-[5px] pt-1.5 transition-colors duration-200 ${
+                      chosen ? fill[zone] : "bg-[#8e9095]"
+                    }`}
+                    style={{ height: px(stop.lakhs) }}
                   >
                     <span className="text-[9px] leading-none font-semibold text-white tabular-nums">
-                      {Math.round(share * 100)}%
+                      {share(stop.lakhs)}%
                     </span>
                   </span>
                 </div>
               );
             })}
 
-            {/* Above the highlight, beneath the columns: a column that clears
-                the 2024 level covers the line. */}
-            <span
-              className="pointer-events-none absolute inset-x-0 z-[5] border-t border-dotted border-ink-secondary/70"
-              style={{ bottom: line }}
-            />
+            {lines.map((line) => (
+              <span
+                key={line.year}
+                className={`pointer-events-none absolute inset-x-0 z-[5] border-t border-dotted ${line.rule}`}
+                style={{ bottom: line.at }}
+              />
+            ))}
           </div>
         </div>
 
@@ -195,84 +196,30 @@ function Points({
    --------------------------------------------------------------------------- */
 
 /**
- * Why this cover. Version 1 gives the three points; version 2 puts the value
- * chart first and keeps the two points it doesn't draw. The card's content
- * changes wholly with the amount, so it is keyed and blurs through the swap.
+ * Why this cover: the chart, then the two points it doesn't draw. The card's
+ * content changes wholly with the amount, so it is keyed and blurs through.
  */
-export function CoverReasons({
-  lakhs,
-  mode,
-}: {
-  lakhs: number;
-  mode: "text" | "chart";
-}) {
+export function CoverReasons({ lakhs }: { lakhs: number }) {
   const { current } = useCoverBaseline();
   const verdict = verdictFor(lakhs, current);
-  const points =
-    mode === "chart"
-      ? pointsShownWithChart(verdict.zone, verdict.points.length).map(
-          (index) => verdict.points[index],
-        )
-      : verdict.points;
+  const points = pointsShownWithChart(verdict.zone, verdict.points.length).map(
+    (index) => verdict.points[index],
+  );
 
   return (
     <div
       className={`mt-4 rounded-2xl px-4 pt-3.5 pb-5 transition-colors duration-200 ${surface[verdict.zone]}`}
     >
-      <div key={`${lakhs}-${mode}`} className="motion-safe:animate-swap">
+      <div key={lakhs} className="motion-safe:animate-swap">
         <h3 className="text-[18px] leading-[1.4] font-semibold tracking-[-0.2px] text-balance text-ink">
           {verdict.title}
         </h3>
         <p className="mt-1.5 text-[14px] leading-5 text-ink-secondary">
           Here&rsquo;s why, in three points.
         </p>
-        {mode === "chart" ? <ValueChart lakhs={lakhs} /> : null}
+        <ValueChart lakhs={lakhs} />
         <Points points={points} className="mt-5" />
       </div>
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------------------------
-   Version 3: the question under the list
-   --------------------------------------------------------------------------- */
-
-/**
- * The list already says what each amount is, so the argument waits behind a
- * question, tinted by the amount chosen, until someone wants it.
- */
-export function WhyDrawer({ lakhs }: { lakhs: number }) {
-  const { current } = useCoverBaseline();
-  const verdict = verdictFor(lakhs, current);
-  const [open, setOpen] = useState(false);
-  const question =
-    verdict.zone === "low" ? `Why ${verdict.title}?` : verdict.title;
-
-  return (
-    <div
-      className={`mt-4 rounded-xl transition-colors duration-200 ${surface[verdict.zone]}`}
-    >
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3.5 text-left text-[15px] leading-[1.35] font-semibold text-ink"
-      >
-        <span key={lakhs} className="motion-safe:animate-swap">
-          {question}
-        </span>
-        <ChevronDownIcon
-          size={18}
-          className={`shrink-0 text-ink transition-transform duration-200 ease-strong ${
-            open ? "rotate-180" : ""
-          }`}
-        />
-      </button>
-      {open ? (
-        <div key={lakhs} className="px-4 pb-5 motion-safe:animate-reveal">
-          <Points points={verdict.points} className="mt-1" />
-        </div>
-      ) : null}
     </div>
   );
 }

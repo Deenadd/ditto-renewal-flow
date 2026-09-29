@@ -214,46 +214,23 @@ the ₹34,999 drawn in the frames.
 
 ### Picking the cover
 
-The final frames (node `146:4524`) settle on three versions, behind the menu at
-the trailing edge of the heading. The other layouts explored along the way —
-cards, stepper, compare, table, the claim chart — are no longer offered; they
-remain in the git history.
+One version, from node `147:5537`; the others explored along the way have been
+removed and remain in the git history.
 
-| Version | Control | Reasons |
-| --- | --- | --- |
-| 1 · Slider | The slider | Three numbered points in a card tinted by the amount |
-| 2 · Slider and chart | The slider | The same card, led by a chart of what each amount protects against 2024, then the two points the chart doesn't draw |
-| 3 · List | A card per amount, with its band, a line on what it buys, the yearly price and what it adds a month | Behind a tinted question — "Why ₹15 lakh is not enough anymore?" — that opens onto the three points |
+The slider uses two colours: orange below the ₹20 lakh recommendation, green
+from it up. Its fill runs to the handle over a grey rail, a green shield marks
+the recommendation until the handle takes it, and the premium sits top right.
+Orange text uses the darker attention orange, which holds 5:1 on white.
 
-The slider card follows the final frames too: the legend sits top right where
-the premium was, and the premium lives in the sidebar.
+The reasons card beneath it is tinted to match and leads with a chart: a
+column per amount on one scale, with dotted lines for what the family needed —
+₹15 lakh in 2024, and the same care at today's prices in 2026 (₹18.75 lakh).
+Each column is labelled with its share of today's need: 80%, 107%, 133%, 160%.
+Only the chosen column is coloured. Two of the three points follow; the chart
+makes the third.
 
-In the chart the frames print ₹20L under all three upper columns and 110% on
-the ₹20L column; the build labels them ₹20L, ₹25L and ₹30L and prints 107%,
-which is ₹20 lakh ÷ 1.25 against ₹15 lakh. The list's first price reads
-₹34,599 in the frames; the build keeps ₹34,999, the figure everywhere else.
-
-#### Version 1, the slider
-
-Nodes `142:3693`, `142:3789` and `142:3883` draw it at ₹15L, ₹20L and
-₹25L. The track carries the advice rather than just the value: it is yellow up
-to the ₹20L recommendation and green past it, and the blue fill covers whichever
-of those the chosen amount has already reached. Three things then move together:
-
-| Cover | Handle | Tick | Card below |
-| --- | --- | --- | --- |
-| Below ₹20L | Blue ring, grip mark | Blue | Peach — "₹15 lakh is not enough anymore" |
-| ₹20L | Green ring, shield, standing in for the recommendation marker | Green | Green — "Good choice…" |
-| Above ₹20L | Purple ring, shield | Purple | Lilac — "…gives you extra room" |
-
-It is a real `<input type="range">` under a drawn track, so arrow keys, Home and
-End, click-to-position and drag all work, and the value is announced as
-"₹20 lakh, ₹40,429 a year, recommended for your family". ₹10L is drawn greyed
-and is out of range, because cover does not drop at renewal — which is also why
-the other two versions offer four amounts rather than five.
-
-The handle and fill move on `transform` over 200ms `cubic-bezier(0.23, 1, 0.32, 1)`,
-so dragging across stops retargets smoothly instead of restarting.
+The frame prints 100% and 110% on the ₹20L column in different states; the
+build prints 107%, which is what the chart's own numbers give.
 
 ### Scenarios: when they already have the recommended cover
 

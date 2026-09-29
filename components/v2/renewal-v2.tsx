@@ -5,7 +5,6 @@ import { CoverBaseline } from "@/components/v2/cover-baseline";
 import { CoverPicker } from "@/components/v2/cover-picker";
 import { PolicySummary } from "@/components/policy-summary";
 import { SelectField, TextField } from "@/components/ui/field";
-import { VersionMenu } from "@/components/ui/version-menu";
 import {
   AttentionIcon,
   CheckMarkIcon,
@@ -22,7 +21,6 @@ import {
 } from "@/lib/renewal-data";
 import {
   CURRENT_LAKHS,
-  coverLayoutOptions,
   coverScenarios,
   coverSectionFor,
   deltaFor,
@@ -41,9 +39,7 @@ import {
   v2MoreAddOns,
   v2PickedAddOns,
   v2Sections,
-  type CoverLayout,
   type CoverScenario,
-  type ReasonLayout,
   type V2AddOn,
   type V2Member,
 } from "@/lib/v2-data";
@@ -607,10 +603,6 @@ export type V2State = {
   lakhs: number;
   addOns: string[];
   periodId: string;
-  /** Which cover picker is on screen. A display choice, not an edit. */
-  coverLayout: CoverLayout;
-  /** How the reasons under it are shown. Also a display choice. */
-  reasonLayout: ReasonLayout;
   /** Whether the reviewer has moved the cover themselves. */
   coverTouched: boolean;
 };
@@ -628,8 +620,6 @@ export function initialV2StateFor(scenario: CoverScenario): V2State {
     lakhs: coverScenarios[scenario].opensAt,
     addOns: v2DefaultAddOns,
     periodId: policyPeriods[0].id,
-    coverLayout: "slider",
-    reasonLayout: "claim",
     coverTouched: false,
   };
 }
@@ -677,8 +667,6 @@ export function RenewalV2({
     lakhs,
     addOns,
     periodId,
-    coverLayout,
-    reasonLayout,
   } = value;
   const set = (patch: Partial<V2State>) => onChange({ ...value, ...patch });
 
@@ -695,8 +683,7 @@ export function RenewalV2({
     scenario === "prepicked" && !value.coverTouched && lakhs === opensAt;
 
   function clearAll() {
-    /* Which versions are on screen are not the reviewer's changes. */
-    onChange({ ...initialV2StateFor(scenario), coverLayout, reasonLayout });
+    onChange(initialV2StateFor(scenario));
   }
 
   return (
@@ -775,15 +762,6 @@ export function RenewalV2({
             <Section
               index={3}
               {...coverSectionFor(current)}
-              action={
-                <VersionMenu
-                  label="Cover picker version"
-                  value={coverLayout}
-                  options={coverLayoutOptions}
-                  onChange={(next) => set({ coverLayout: next as CoverLayout })}
-                  align="end"
-                />
-              }
             >
               {prepicked ? (
                 /* An opt-out default has to say so, next to the control it
@@ -806,7 +784,6 @@ export function RenewalV2({
                 </p>
               ) : null}
               <CoverPicker
-                layout={coverLayout}
                 lakhs={lakhs}
                 onChange={(next) => set({ lakhs: next, coverTouched: true })}
               />
