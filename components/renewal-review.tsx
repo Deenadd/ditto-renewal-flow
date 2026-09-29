@@ -347,13 +347,26 @@ export function RenewalReview({
   /* Values the reviewer changed, so the sidebar shows the policy being bought. */
   /* Which proposal steps this journey needs, and therefore whether the
      proposal step belongs on the anchor screen at all. */
+  /**
+   * V2's rules (node 148:6509): a new address needs an ID check but no
+   * proposal form; a new person needs the proposal form but no ID check; both
+   * need both. Nothing else on V2 adds a step.
+   */
+  const [v2Needs, setV2Needs] = useState<{ kyc: boolean; proposal: boolean } | null>(
+    null,
+  );
+
   const proposalSteps = useMemo(
     () =>
-      proposalStepsFor({
-        location: answers.location === "yes",
-        members: answers.members === "yes",
-      }),
-    [answers.location, answers.members],
+      proposalStepsFor(
+        v2Needs
+          ? { location: false, members: v2Needs.proposal }
+          : {
+              location: answers.location === "yes",
+              members: answers.members === "yes",
+            },
+      ),
+    [answers.location, answers.members, v2Needs],
   );
 
   /* The health questions are asked about whoever was just added, which is who
@@ -374,11 +387,11 @@ export function RenewalReview({
 
   const journeySteps = useMemo(() => {
     const list: IssuanceStepId[] = [];
-    if (hasChanges) list.push("kyc");
+    if (v2Needs ? v2Needs.kyc : hasChanges) list.push("kyc");
     if (proposalSteps.length > 0) list.push("proposal");
     list.push("payment", "issuance");
     return list;
-  }, [hasChanges, proposalSteps.length]);
+  }, [hasChanges, proposalSteps.length, v2Needs]);
 
   const pinCodeLabel =
     answers.location === "yes" && pinCode.length === 6
@@ -423,7 +436,21 @@ export function RenewalReview({
       cover: `₹${v2State.lakhs} Lakhs`,
       premium: formatRupees(premiumFor(v2State.lakhs)),
     });
-    goTo("calculating");
+
+    /* The screen already shows the price, so it goes straight on: an ID
+       check first if the address changed, otherwise the steps screen, which
+       leads to the proposal form (step by step, as in V1) when someone new
+       was added, and to payment when not. */
+    const needs = { kyc: touched.address, proposal: touched.members };
+    setV2Needs(needs);
+    setSteppedForm(true);
+    if (needs.kyc) {
+      setJourneyStep("kyc");
+      goTo("kyc");
+    } else {
+      setJourneyStep(needs.proposal ? "proposal" : "payment");
+      goTo("anchor");
+    }
   }
 
   /**

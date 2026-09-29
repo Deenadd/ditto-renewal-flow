@@ -286,6 +286,31 @@ export function reasonStatsFor(lakhs: number, current = CURRENT_LAKHS): ReasonSt
   ];
 }
 
+/** How the cover question is presented; the dropdown by its heading picks one. */
+export type CoverLayout = "slider" | "chart" | "list";
+
+export const coverLayoutOptions: {
+  value: CoverLayout;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    value: "slider",
+    label: "Version 1 · Slider",
+    hint: "The slider, with the reasons as three points.",
+  },
+  {
+    value: "chart",
+    label: "Version 2 · Slider and chart",
+    hint: "The slider, with a chart of what each amount protects.",
+  },
+  {
+    value: "list",
+    label: "Version 3 · List",
+    hint: "A row per amount, with the reasons behind a question.",
+  },
+];
+
 /** What each band means, said the same way wherever a picker names it. */
 export const zoneLabels: Record<CoverZone, string> = {
   low: "Not enough",

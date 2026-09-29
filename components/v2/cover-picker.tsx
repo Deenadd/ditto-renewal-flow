@@ -1,9 +1,13 @@
 "use client";
 
 import { useCoverBaseline } from "@/components/v2/cover-baseline";
-import { CoverReasons } from "@/components/v2/cover-reasons";
+import { CoverReasons, WhyDrawer } from "@/components/v2/cover-reasons";
 import {
   RECOMMENDED_LAKHS,
+  coverReasonFor,
+  deltaFor,
+  zoneLabels,
+  type CoverLayout,
   coverStops,
   noteFor,
   premiumFor,
@@ -44,6 +48,19 @@ const zoneFillBar: Record<CoverZone, string> = {
   good: "bg-success-solid-strong",
   high: "bg-success-solid-strong",
 };
+
+const zoneDot: Record<CoverZone, string> = {
+  low: "bg-track-low",
+  good: "bg-success-solid-strong",
+  high: "bg-extra",
+};
+
+const zoneChip: Record<CoverZone, string> = {
+  low: "bg-orange-50 text-attention",
+  good: "bg-green-100 text-success",
+  high: "bg-extra-bg text-extra",
+};
+
 
 /** Two bars, the grab affordance inside the handle below the recommendation. */
 function GripMark() {
@@ -224,7 +241,11 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
                 key={stop.lakhs}
                 style={{ left: `${pct(stop.lakhs)}%` }}
                 className={`absolute top-0 -translate-x-1/2 text-[14px] leading-5 whitespace-nowrap ${
-                  stop.lakhs === current ? "text-ink-secondary" : "text-success"
+                  stop.lakhs === current
+                    ? "text-ink-secondary"
+                    : stop.lakhs > RECOMMENDED_LAKHS
+                      ? "text-extra"
+                      : "text-success"
                 }`}
               >
                 {note}
@@ -250,17 +271,120 @@ function SliderControl({ lakhs, onChange }: ControlProps) {
 
 
 
+/** What band this amount falls in, said in words as well as colour. */
+function ZoneChip({ lakhs }: { lakhs: number }) {
+  const zone = zoneFor(lakhs);
+  return (
+    <span
+      className={`ff-case flex w-fit shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] leading-none font-medium tracking-[0.4px] uppercase ${zoneChip[zone]}`}
+    >
+      <span
+        aria-hidden="true"
+        className={`block size-1.5 shrink-0 rounded-full ${zoneDot[zone]}`}
+      />
+      {lakhs === RECOMMENDED_LAKHS ? "Recommended" : zoneLabels[zone]}
+    </span>
+  );
+}
+
 /**
- * The cover check (node 147:5537): the slider, with the reasons card beneath
- * it led by a chart of what each amount protects.
+ * Version 3 (node 146:4524). A card per amount, stacked: the amount and its
+ * band, one line on what it buys, and the yearly price with what it adds. The
+ * reasons wait in a drawer below, so the list stays a list.
  */
-export function CoverPicker({ lakhs, onChange }: ControlProps) {
+function FinalListControl({ lakhs, onChange }: ControlProps) {
+  const { current, reachable } = useCoverBaseline();
+  return (
+    <fieldset className="flex flex-col gap-2.5">
+      <legend className="sr-only">Cover amount</legend>
+      {reachable.map((stop) => {
+        const zone = zoneFor(stop.lakhs);
+        const chosen = stop.lakhs === lakhs;
+        const delta = deltaFor(stop.lakhs, current);
+        return (
+          <label
+            key={stop.lakhs}
+            className="flex cursor-pointer items-start gap-3 rounded-xl border border-grey-150 bg-white px-4 py-3.5 shadow-card transition-colors duration-150 hover:border-grey-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus-ring has-[:focus-visible]:ring-offset-2"
+          >
+            <input
+              type="radio"
+              name="cover-amount"
+              checked={chosen}
+              onChange={() => onChange(stop.lakhs)}
+              aria-label={`₹${stop.lakhs} lakh, ${rupees(premiumFor(stop.lakhs))} a year`}
+              className="sr-only"
+            />
+            <span
+              aria-hidden="true"
+              className={`mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-full border-[1.5px] transition-colors duration-150 ${
+                chosen ? "border-primary bg-primary" : "border-grey-200 bg-white"
+              }`}
+            >
+              <span
+                className={`block size-1.5 rounded-full bg-white transition-opacity duration-150 ${
+                  chosen ? "opacity-100" : "opacity-0"
+                }`}
+              />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                <span className="ff-figures text-[15px] leading-[1.3] font-semibold text-ink">
+                  ₹{stop.lakhs} Lakhs
+                </span>
+                <ZoneChip lakhs={stop.lakhs} />
+              </span>
+              <span className="mt-1.5 block text-[13px] leading-[1.45] text-pretty text-ink-secondary">
+                {coverReasonFor(stop.lakhs, current)}
+              </span>
+            </span>
+            <span className="shrink-0 text-right">
+              <span className="ff-figures block text-[15px] leading-none font-semibold text-ink tabular-nums">
+                {rupees(premiumFor(stop.lakhs))}/yr
+              </span>
+              <span
+                className={`ff-figures mt-1.5 block text-[12px] leading-none tabular-nums ${
+                  delta.year === 0 ? "text-ink-secondary" : zoneText[zone]
+                }`}
+              >
+                {delta.year === 0
+                  ? "no change"
+                  : `+₹${delta.month.toLocaleString("en-IN")}/month`}
+              </span>
+            </span>
+          </label>
+        );
+      })}
+    </fieldset>
+  );
+}
+
+/**
+ * The cover check. Three versions, from the final frames: the slider with the
+ * reasons as three points (the main screen, node 148:6509), the slider with
+ * the chart leading the reasons (node 147:5537), and the list with the reasons
+ * behind a question (node 146:4524).
+ */
+export function CoverPicker({
+  layout,
+  lakhs,
+  onChange,
+}: ControlProps & { layout: CoverLayout }) {
   const { current } = useCoverBaseline();
 
   return (
     <div>
-      <SliderControl lakhs={lakhs} onChange={onChange} />
-      <CoverReasons lakhs={lakhs} />
+      <div key={layout} className="motion-safe:animate-swap">
+        {layout === "list" ? (
+          <FinalListControl lakhs={lakhs} onChange={onChange} />
+        ) : (
+          <SliderControl lakhs={lakhs} onChange={onChange} />
+        )}
+      </div>
+      {layout === "list" ? (
+        <WhyDrawer lakhs={lakhs} />
+      ) : (
+        <CoverReasons lakhs={lakhs} mode={layout === "chart" ? "chart" : "text"} />
+      )}
 
       <p aria-live="polite" className="sr-only">
         Cover set to ₹{lakhs} lakh. {verdictFor(lakhs, current).title}

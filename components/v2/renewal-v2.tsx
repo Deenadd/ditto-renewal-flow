@@ -3,7 +3,8 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { CoverBaseline } from "@/components/v2/cover-baseline";
 import { CoverPicker } from "@/components/v2/cover-picker";
-import { PolicySummary } from "@/components/policy-summary";
+import { PolicyCard, addOnPrice } from "@/components/v2/policy-card";
+import { VersionMenu } from "@/components/ui/version-menu";
 import { SelectField, TextField } from "@/components/ui/field";
 import {
   AttentionIcon,
@@ -15,12 +16,12 @@ import {
   PlusIcon,
 } from "@/components/icons";
 import {
-  formatRupees,
   policyPeriods,
   relationshipOptions,
 } from "@/lib/renewal-data";
 import {
   CURRENT_LAKHS,
+  coverLayoutOptions,
   coverScenarios,
   coverSectionFor,
   deltaFor,
@@ -33,12 +34,12 @@ import {
   v2ExpiryBanner,
   v2Footer,
   v2Intro,
-  v2JourneyTabs,
   v2LockedAddOns,
   v2Members,
   v2MoreAddOns,
   v2PickedAddOns,
   v2Sections,
+  type CoverLayout,
   type CoverScenario,
   type V2AddOn,
   type V2Member,
@@ -432,10 +433,27 @@ function AddOnRow({
   );
 }
 
-function AddOnGroup({ title, children }: { title: string; children: ReactNode }) {
+function AddOnGroup({
+  title,
+  badge,
+  children,
+}: {
+  title: string;
+  /** "Recommended" beside the group picked for this family (node 148:6509). */
+  badge?: string;
+  children: ReactNode;
+}) {
   return (
     <section className="flex flex-col gap-5">
-      <h3 className="text-[15px] leading-none font-semibold text-ink">{title}</h3>
+      <h3 className="flex items-center gap-2 text-[15px] leading-none font-semibold text-ink">
+        {title}
+        {badge ? (
+          <span className="ff-case flex items-center gap-1.5 rounded-md bg-green-100 px-1.5 py-1 text-[11px] leading-none font-medium tracking-[0.4px] text-success uppercase">
+            <span aria-hidden="true" className="block size-1.5 rounded-full bg-success-solid-strong" />
+            {badge}
+          </span>
+        ) : null}
+      </h3>
       {children}
     </section>
   );
@@ -460,7 +478,7 @@ function AddOnCheck({
 
       <hr className="border-grey-150" />
 
-      <AddOnGroup title={v2AddOnGroups.picked}>
+      <AddOnGroup title={v2AddOnGroups.picked} badge="Recommended">
         {v2PickedAddOns.map((addOn) => (
           <AddOnRow
             key={addOn.id}
@@ -478,18 +496,15 @@ function AddOnCheck({
           type="button"
           aria-expanded={showMore}
           onClick={() => setShowMore((open) => !open)}
-          className="flex items-center gap-2 text-[15px] leading-none font-semibold text-ink"
+          className="flex w-full items-center justify-between gap-2 text-left text-[15px] leading-none font-semibold text-ink"
         >
           {v2AddOnGroups.more}
           <ChevronDownIcon
-            className={`shrink-0 text-ink-secondary transition-transform duration-200 ease-strong ${
+            className={`shrink-0 text-ink transition-transform duration-200 ease-strong ${
               showMore ? "rotate-180" : ""
             }`}
-            size={18}
+            size={20}
           />
-          <span className="text-[14px] font-normal text-ink-muted">
-            ({v2MoreAddOns.length})
-          </span>
         </button>
 
         {showMore
@@ -605,6 +620,8 @@ export type V2State = {
   periodId: string;
   /** Whether the reviewer has moved the cover themselves. */
   coverTouched: boolean;
+  /** Which cover version is on screen. A display choice, not an edit. */
+  coverLayout: CoverLayout;
 };
 
 /** The screen as a scenario opens it, before anyone has touched anything. */
@@ -621,6 +638,7 @@ export function initialV2StateFor(scenario: CoverScenario): V2State {
     addOns: v2DefaultAddOns,
     periodId: policyPeriods[0].id,
     coverTouched: false,
+    coverLayout: "slider",
   };
 }
 
@@ -682,8 +700,17 @@ export function RenewalV2({
   const prepicked =
     scenario === "prepicked" && !value.coverTouched && lakhs === opensAt;
 
+  /* The drawn total already includes the add-on picked by default, so only
+     changes from that default move it. */
+  const allAddOns = [...v2PickedAddOns, ...v2MoreAddOns];
+  const total =
+    premiumFor(lakhs) +
+    allAddOns
+      .filter((a) => addOns.includes(a.id) !== v2DefaultAddOns.includes(a.id))
+      .reduce((sum, a) => sum + (addOns.includes(a.id) ? 1 : -1) * addOnPrice(a), 0);
+
   function clearAll() {
-    onChange(initialV2StateFor(scenario));
+    onChange({ ...initialV2StateFor(scenario), coverLayout: value.coverLayout });
   }
 
   return (
@@ -698,43 +725,8 @@ export function RenewalV2({
             {v2Intro.description}
           </p>
 
-          {/* Where this screen sits in the renewal. Steps 2 and 3 are the
-              existing summary and issuance flow, so they read as still to
-              come rather than as tabs you can pick. */}
-          <ol className="mt-8 grid grid-cols-3 gap-4">
-            {v2JourneyTabs.map((tab, position) => {
-              const current = position === 0;
-              return (
-                <li
-                  key={tab.id}
-                  aria-current={current ? "step" : undefined}
-                  className={`flex items-center gap-2 border-b-2 pb-5 ${
-                    current ? "border-primary" : "border-grey-150"
-                  }`}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`ff-figures grid size-5 shrink-0 place-items-center rounded-full text-[11px] leading-none font-medium ${
-                      current
-                        ? "bg-primary text-ink-inverted"
-                        : "bg-grey-150 text-ink-muted"
-                    }`}
-                  >
-                    {position + 1}
-                  </span>
-                  <span
-                    className={`truncate text-[15px] leading-none font-medium ${
-                      current ? "text-ink" : "text-ink-muted"
-                    }`}
-                  >
-                    {tab.label}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
 
-          <p className="mt-5 flex items-start gap-2.5 rounded-xl bg-orange-50 px-4 py-3.5 text-[15px] leading-[1.45] text-attention">
+          <p className="mt-8 flex items-start gap-2.5 rounded-xl bg-orange-50 px-4 py-3.5 text-[15px] leading-[1.45] text-attention">
             <AttentionIcon className="mt-0.5 shrink-0" size={18} />
             <span>
               <strong className="font-semibold">{v2ExpiryBanner.lead}</strong>{" "}
@@ -762,6 +754,15 @@ export function RenewalV2({
             <Section
               index={3}
               {...coverSectionFor(current)}
+              action={
+                <VersionMenu
+                  label="Cover version"
+                  value={value.coverLayout}
+                  options={coverLayoutOptions}
+                  onChange={(next) => set({ coverLayout: next as CoverLayout })}
+                  align="end"
+                />
+              }
             >
               {prepicked ? (
                 /* An opt-out default has to say so, next to the control it
@@ -784,6 +785,7 @@ export function RenewalV2({
                 </p>
               ) : null}
               <CoverPicker
+                layout={value.coverLayout}
                 lakhs={lakhs}
                 onChange={(next) => set({ lakhs: next, coverTouched: true })}
               />
@@ -831,14 +833,13 @@ export function RenewalV2({
 
         <aside className="mt-12 lg:mt-0">
           <div className="lg:sticky lg:top-[88px]">
-            <PolicySummary
-              variant="compact"
-              pinCode={
-                touched.address ? `${address.pinCode}, ${address.city}` : undefined
-              }
+            <PolicyCard
               cover={`₹${lakhs} Lakhs`}
-              premium={formatRupees(premiumFor(lakhs))}
-              addedMember={added[0]?.relation}
+              pinCode={`${address.pinCode}, ${address.city}`}
+              pinChanged={touched.address}
+              selectedAddOns={addOns}
+              total={total}
+              onConfirm={onConfirm}
             />
           </div>
         </aside>

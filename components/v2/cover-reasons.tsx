@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDownIcon } from "@/components/icons";
 import { useCoverBaseline } from "@/components/v2/cover-baseline";
 import {
   COST_GROWTH_SINCE_2024,
@@ -196,30 +198,84 @@ function Points({
    --------------------------------------------------------------------------- */
 
 /**
- * Why this cover: the chart, then the two points it doesn't draw. The card's
- * content changes wholly with the amount, so it is keyed and blurs through.
+ * Why this cover. Version 1 gives the three points; version 2 leads with the
+ * chart and keeps the two points it doesn't draw. The card's content changes
+ * wholly with the amount, so it is keyed and blurs through the swap.
  */
-export function CoverReasons({ lakhs }: { lakhs: number }) {
+export function CoverReasons({
+  lakhs,
+  mode,
+}: {
+  lakhs: number;
+  mode: "text" | "chart";
+}) {
   const { current } = useCoverBaseline();
   const verdict = verdictFor(lakhs, current);
-  const points = pointsShownWithChart(verdict.zone, verdict.points.length).map(
-    (index) => verdict.points[index],
-  );
+  const points =
+    mode === "chart"
+      ? pointsShownWithChart(verdict.zone, verdict.points.length).map(
+          (index) => verdict.points[index],
+        )
+      : verdict.points;
 
   return (
     <div
       className={`mt-4 rounded-2xl px-4 pt-3.5 pb-5 transition-colors duration-200 ${surface[verdict.zone]}`}
     >
-      <div key={lakhs} className="motion-safe:animate-swap">
+      <div key={`${lakhs}-${mode}`} className="motion-safe:animate-swap">
         <h3 className="text-[18px] leading-[1.4] font-semibold tracking-[-0.2px] text-balance text-ink">
           {verdict.title}
         </h3>
         <p className="mt-1.5 text-[14px] leading-5 text-ink-secondary">
           Here&rsquo;s why, in three points.
         </p>
-        <ValueChart lakhs={lakhs} />
+        {mode === "chart" ? <ValueChart lakhs={lakhs} /> : null}
         <Points points={points} className="mt-5" />
       </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   Version 3: the question under the list
+   --------------------------------------------------------------------------- */
+
+/**
+ * The list already says what each amount is, so the argument waits behind a
+ * question, tinted by the amount chosen, until someone wants it.
+ */
+export function WhyDrawer({ lakhs }: { lakhs: number }) {
+  const { current } = useCoverBaseline();
+  const verdict = verdictFor(lakhs, current);
+  const [open, setOpen] = useState(false);
+  const question =
+    verdict.zone === "low" ? `Why ${verdict.title}?` : verdict.title;
+
+  return (
+    <div
+      className={`mt-4 rounded-xl transition-colors duration-200 ${surface[verdict.zone]}`}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3.5 text-left text-[15px] leading-[1.35] font-semibold text-ink"
+      >
+        <span key={lakhs} className="motion-safe:animate-swap">
+          {question}
+        </span>
+        <ChevronDownIcon
+          size={18}
+          className={`shrink-0 text-ink transition-transform duration-200 ease-strong ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      {open ? (
+        <div key={lakhs} className="px-4 pb-5 motion-safe:animate-reveal">
+          <Points points={verdict.points} className="mt-1" />
+        </div>
+      ) : null}
     </div>
   );
 }

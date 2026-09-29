@@ -212,25 +212,36 @@ A changed cover carries its price with it: the sidebar card and policy bar on
 every later screen read it from a quote context, rather than falling back to
 the ₹34,999 drawn in the frames.
 
-### Picking the cover
+### The final screen (node `148:6509`)
 
-One version, from node `147:5537`; the others explored along the way have been
-removed and remain in the git history.
+- No 1-2-3 step tabs; the expiry notice follows the introduction.
+- **Confirm & continue** is active from the start, in the sidebar card and at
+  the foot of the page. **Clear all changes** appears only once something has
+  been edited.
+- The sidebar card shows pin code, cover, a breakdown whose add-on groups fold
+  (already held, recommended, other), the total — which moves with the cover
+  and with add-ons chosen beyond the default — the 80D saving and the button.
+- A **Version** dropdown beside the cover heading picks how the cover question
+  is shown: 1 · Slider with the three points (the default, as drawn), 2 ·
+  Slider and chart, 3 · List with the reasons behind a question.
 
-The slider uses two colours: orange below the ₹20 lakh recommendation, green
-from it up. Its fill runs to the handle over a grey rail, a green shield marks
-the recommendation until the handle takes it, and the premium sits top right.
-Orange text uses the darker attention orange, which holds 5:1 on white.
+Where the frame differs from the rest of the screen, the build follows the
+screen: the sidebar lists the third held add-on as Annual Health Checkup (the
+frame repeats Cumulative Bonus Super), prices Instant Cover at ₹1,264 as the
+card does (the frame shows ₹5,056), counts other add-ons out of the 3 offered
+(the frame says 6), and leaves the first held add-on's price in ink.
 
-The reasons card beneath it is tinted to match and leads with a chart: a
-column per amount on one scale, with dotted lines for what the family needed —
-₹15 lakh in 2024, and the same care at today's prices in 2026 (₹18.75 lakh).
-Each column is labelled with its share of today's need: 80%, 107%, 133%, 160%.
-Only the chosen column is coloured. Two of the three points follow; the chart
-makes the third.
+### After Confirm & continue
 
-The frame prints 100% and 110% on the ₹20L column in different states; the
-build prints 107%, which is what the chart's own numbers give.
+| What changed | Route |
+| --- | --- |
+| Nothing, or only cover, add-ons or period | Steps screen → payment |
+| Address | KYC → steps screen → payment |
+| Someone added | Steps screen → proposal form, step by step as in V1 → steps screen → payment |
+| Address and someone added | KYC → steps screen → proposal form, step by step → steps screen → payment |
+
+The proposal form asks only about the new person — Medical 1, Medical 2 and
+Life Style — since a new address no longer adds a communication step.
 
 ### Scenarios: when they already have the recommended cover
 
