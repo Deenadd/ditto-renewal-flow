@@ -437,20 +437,15 @@ export function RenewalReview({
       premium: formatRupees(premiumFor(v2State.lakhs)),
     });
 
-    /* The screen already shows the price, so it goes straight on: an ID
-       check first if the address changed, otherwise the steps screen, which
-       leads to the proposal form (step by step, as in V1) when someone new
-       was added, and to payment when not. */
+    /* The screen already shows the price, so it goes straight to the steps
+       screen, with whichever step comes first in play: the ID check if the
+       address changed, then the proposal form (step by step, as in V1) if
+       someone new was added, then payment. Start on that screen opens it. */
     const needs = { kyc: touched.address, proposal: touched.members };
     setV2Needs(needs);
     setSteppedForm(true);
-    if (needs.kyc) {
-      setJourneyStep("kyc");
-      goTo("kyc");
-    } else {
-      setJourneyStep(needs.proposal ? "proposal" : "payment");
-      goTo("anchor");
-    }
+    setJourneyStep(needs.kyc ? "kyc" : needs.proposal ? "proposal" : "payment");
+    goTo("anchor");
   }
 
   /**

@@ -236,9 +236,9 @@ card does (the frame shows ₹5,056), counts other add-ons out of the 3 offered
 | What changed | Route |
 | --- | --- |
 | Nothing, or only cover, add-ons or period | Steps screen → payment |
-| Address | KYC → steps screen → payment |
+| Address | Steps screen (KYC in play) → KYC → steps screen → payment |
 | Someone added | Steps screen → proposal form, step by step as in V1 → steps screen → payment |
-| Address and someone added | KYC → steps screen → proposal form, step by step → steps screen → payment |
+| Address and someone added | Steps screen (KYC in play) → KYC → steps screen → proposal form, step by step → steps screen → payment |
 
 The proposal form asks only about the new person — Medical 1, Medical 2 and
 Life Style — since a new address no longer adds a communication step.
